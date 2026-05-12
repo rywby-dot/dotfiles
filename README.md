@@ -282,7 +282,7 @@ connect transparently. No extra config needed beyond having the binary in
 
 If satellite isn't found at startup, driftwm logs a warning and continues without
 X11 support. You can override the binary path or disable the integration in
-[`config.example.toml`](config.example.toml) under `[xwayland]`.
+[`config.reference.toml`](config.reference.toml) under `[xwayland]`.
 
 > Logs go to `$XDG_RUNTIME_DIR/driftwm.log` when launched by a display manager, otherwise stderr.
 
@@ -312,7 +312,7 @@ Config file: `~/.config/driftwm/config.toml` (respects `XDG_CONFIG_HOME`).
 
 ```bash
 mkdir -p ~/.config/driftwm
-cp /etc/driftwm/config.toml ~/.config/driftwm/config.toml
+cp /etc/driftwm/config.reference.toml ~/.config/driftwm/config.toml
 ```
 
 Missing file uses built-in defaults. Partial configs merge with defaults —
@@ -324,7 +324,7 @@ Validate without starting: `driftwm --check-config`.
 autostart = ["waybar", "swaync", "swayosd-server"]
 ```
 
-See [`config.example.toml`](config.example.toml) for all options: input
+See [`config.reference.toml`](config.reference.toml) for all options: input
 settings, scroll/momentum tuning, snap behavior, decorations, effects,
 per-output config, gesture bindings, mouse bindings, and window rules.
 

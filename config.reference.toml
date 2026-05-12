@@ -1,7 +1,15 @@
 # driftwm configuration
-# Copy to ~/.config/driftwm/config.toml and uncomment what you want to change.
-# Missing fields use built-in defaults.
-# Run `driftwm --check-config` to validate without starting the compositor.
+
+# This file documents all built-in defaults.
+#
+# Every commented line below is already active. Uncomment a line only
+# to override its value. Lines under a "# Example:" header are illustrative
+# alternatives (double-commented: `# # key = ...`) — not defaults.
+#
+# To customize: copy to ~/.config/driftwm/config.toml and edit only the
+# lines you want to change. Missing fields use built-in defaults.
+# For bindings, use `= "none"` to remove a default entirely.
+# Validate with: driftwm --check-config
 
 # Window manager modifier key: "super" (default) or "alt"
 # mod_key = "super"
@@ -412,43 +420,43 @@
 # Examples:
 #
 # # Desktop widget (pinned clock/calendar)
-# [[window_rules]]
-# app_id     = "my-widget"
-# position   = [0, 0]
-# widget     = true
-# decoration = "none"
+# # [[window_rules]]
+# # app_id     = "my-widget"
+# # position   = [0, 0]
+# # widget     = true
+# # decoration = "none"
 #
 # # Blurred transparent terminal
-# [[window_rules]]
-# app_id  = "kitty"
-# opacity = 0.85
-# blur    = true
+# # [[window_rules]]
+# # app_id  = "kitty"
+# # opacity = 0.85
+# # blur    = true
 #
 # # Game: pass ALL keys to the app (mod+q, ctrl+q etc. reach the game)
-# [[window_rules]]
-# app_id    = "steam_app_*"
-# pass_keys = true
+# # [[window_rules]]
+# # app_id    = "steam_app_*"
+# # pass_keys = true
 #
 # # Game: only let ctrl+q through, keep everything else (mod+q still closes)
-# [[window_rules]]
-# app_id    = "factorio"
-# pass_keys = ["ctrl+q"]
+# # [[window_rules]]
+# # app_id    = "factorio"
+# # pass_keys = ["ctrl+q"]
 #
 # # Regex match: any Steam game app
-# [[window_rules]]
-# app_id    = "/^steam_app_\\d+$/"
-# pass_keys = true
+# # [[window_rules]]
+# # app_id    = "/^steam_app_\\d+$/"
+# # pass_keys = true
 #
 # # Compose rules: blur from first rule, opacity from second (both apply)
-# [[window_rules]]
-# app_id = "Alacritty"
-# blur   = true
+# # [[window_rules]]
+# # app_id = "Alacritty"
+# # blur   = true
 #
-# [[window_rules]]
-# app_id  = "Alacritty"
-# opacity = 0.9
+# # [[window_rules]]
+# # app_id  = "Alacritty"
+# # opacity = 0.9
 #
 # # Iced/libcosmic utility windows that share the main window's app_id
-# [[window_rules]]
-# title  = "winit window"
-# widget = true
+# # [[window_rules]]
+# # title  = "winit window"
+# # widget = true

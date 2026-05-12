@@ -13,7 +13,8 @@ install:
 	install -Dm755 resources/driftwm-session $(DESTDIR)$(BINDIR)/driftwm-session
 	install -Dm644 resources/driftwm.desktop $(DESTDIR)$(DATADIR)/wayland-sessions/driftwm.desktop
 	install -Dm644 resources/driftwm-portals.conf $(DESTDIR)$(DATADIR)/xdg-desktop-portal/driftwm-portals.conf
-	install -Dm644 config.example.toml $(DESTDIR)$(SYSCONFDIR)/driftwm/config.toml
+	rm -f $(DESTDIR)$(SYSCONFDIR)/driftwm/config.toml
+	install -Dm644 config.reference.toml $(DESTDIR)$(SYSCONFDIR)/driftwm/config.reference.toml
 	for f in extras/wallpapers/*.glsl extras/wallpapers/*/*.glsl; do \
 		[ -e "$$f" ] || continue; \
 		rel=$${f#extras/wallpapers/}; \

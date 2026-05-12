@@ -79,7 +79,7 @@
           install -Dm755 resources/driftwm-session $out/bin/driftwm-session
           install -Dm644 resources/driftwm.desktop $out/share/wayland-sessions/driftwm.desktop
           install -Dm644 resources/driftwm-portals.conf $out/share/xdg-desktop-portal/driftwm-portals.conf
-          install -Dm644 config.example.toml $out/etc/driftwm/config.toml
+          install -Dm644 config.reference.toml $out/etc/driftwm/config.reference.toml
           for f in extras/wallpapers/*.glsl; do
             install -Dm644 "$f" "$out/share/driftwm/wallpapers/$(basename "$f")"
           done

@@ -147,11 +147,9 @@ do_install() {
     install -Dm644 "$SRCDIR/driftwm.desktop" "$DATADIR/wayland-sessions/driftwm.desktop"
     install -Dm644 "$SRCDIR/driftwm-portals.conf" "$DATADIR/xdg-desktop-portal/driftwm-portals.conf"
 
-    if [ ! -f "$SYSCONFDIR/driftwm/config.toml" ]; then
-        install -Dm644 "$SRCDIR/config.toml" "$SYSCONFDIR/driftwm/config.toml"
-    else
-        bold "Keeping existing $SYSCONFDIR/driftwm/config.toml"
-    fi
+    # Clean up stale system config from pre-rename installs (compositor never read it)
+    rm -f "$SYSCONFDIR/driftwm/config.toml"
+    install -Dm644 "$SRCDIR/config.reference.toml" "$SYSCONFDIR/driftwm/config.reference.toml"
 
     for f in "$SRCDIR"/wallpapers/*.glsl "$SRCDIR"/wallpapers/*/*.glsl; do
         [ -f "$f" ] || continue
@@ -163,7 +161,7 @@ do_install() {
     echo ""
     echo "  Binary:     $BINDIR/driftwm"
     echo "  Session:    $BINDIR/driftwm-session"
-    echo "  Config:     $SYSCONFDIR/driftwm/config.toml"
+    echo "  Reference:  $SYSCONFDIR/driftwm/config.reference.toml"
     echo "  Wallpapers: $DATADIR/driftwm/wallpapers/"
     echo ""
     echo "Select 'driftwm' from your display manager, or run 'driftwm' from a TTY."
@@ -178,8 +176,8 @@ do_uninstall() {
     rm -f "$DATADIR/wayland-sessions/driftwm.desktop"
     rm -f "$DATADIR/xdg-desktop-portal/driftwm-portals.conf"
     rm -rf "$DATADIR/driftwm"
-    # Don't remove config — user may want to keep it
-    green "driftwm uninstalled. Config left at $SYSCONFDIR/driftwm/"
+    rm -rf "$SYSCONFDIR/driftwm"
+    green "driftwm uninstalled."
 }
 
 case "${1:-install}" in
