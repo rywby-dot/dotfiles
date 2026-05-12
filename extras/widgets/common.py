@@ -49,7 +49,9 @@ def sparkline(values: deque | list, width: int = 10) -> str:
     recent = list(values)[-width:]
     if not recent:
         return " " * width
-    return "".join(SPARK[max(min(int(v / 100 * 8), 8), 1 if v > 0.5 else 0)] for v in recent)
+    return "".join(
+        SPARK[max(min(int(v / 100 * 8), 8), 1 if v > 0.5 else 0)] for v in recent
+    )
 
 
 def progress_bar(pct: float, width: int = 10) -> str:
@@ -164,26 +166,53 @@ def get_ram() -> tuple[float, float]:
     return (total - avail) / 1048576, total / 1048576
 
 
-def get_battery() -> tuple[int, str, str] | None:
-    """Returns (percent, status, time_remaining) or None. Uses sysfs (no subprocess)."""
-    for bat in sorted(Path("/sys/class/power_supply").glob("BAT*")):
+def get_battery() -> tuple[int, str, float | None] | None:
+    """Returns (percent, status, hours_remaining) or None. Uses sysfs (no subprocess).
+
+    Iterates all power supplies and filters by type=Battery, so this works on
+    x86 (BAT0/BAT1) and Apple Silicon under Asahi/ALARM (macsmc-battery) alike.
+    Time remaining is computed from energy/power (µWh/µW) or charge/current
+    (µAh/µA), whichever the driver exposes.
+    """
+    for ps in sorted(Path("/sys/class/power_supply").glob("*")):
         try:
-            pct = int((bat / "capacity").read_text().strip())
-            status = (bat / "status").read_text().strip().lower()
+            if (ps / "type").read_text().strip() != "Battery":
+                continue
+            pct = int((ps / "capacity").read_text().strip())
+            status = (ps / "status").read_text().strip().lower()
         except (OSError, ValueError):
             continue
-        # Try to read time remaining from energy_now/power_now
-        time_rem = ""
+        return pct, status, _battery_hours(ps, status)
+    return None
+
+
+def _battery_hours(ps: Path, status: str) -> float | None:
+    """Compute remaining battery hours from sysfs counters, or None."""
+    if status == "full":
+        return None
+    # Try energy/power (µWh / µW) first, then charge/current (µAh / µA).
+    for now_file, rate_file, full_file in (
+        ("energy_now", "power_now", "energy_full"),
+        ("charge_now", "current_now", "charge_full"),
+    ):
         try:
-            energy = int((bat / "energy_now").read_text().strip())
-            power = int((bat / "power_now").read_text().strip())
-            if power > 0:
-                hours = energy / power
-                h, m = int(hours), int((hours % 1) * 60)
-                time_rem = f"{h}h {m}m"
+            now = int((ps / now_file).read_text().strip())
+            rate = abs(int((ps / rate_file).read_text().strip()))
+            if status == "charging":
+                full = int((ps / full_file).read_text().strip())
+                remaining = full - now
+            else:
+                remaining = now
         except (OSError, ValueError):
-            pass
-        return pct, status, time_rem
+            continue
+        if rate == 0:
+            continue
+        hours = remaining / rate
+        # Cap absurd values: when charging is throttled near a user-set cap
+        # (e.g. 80%) or the laptop is deeply idle, `current_now` drops to a
+        # trickle and the estimate blows up. No real laptop battery legitimately
+        # reads > 48h either direction.
+        return hours if 0 < hours <= 48 else None
     return None
 
 
@@ -341,7 +370,9 @@ def get_weather() -> dict | None:
         cur = data["current"]
         daily = data["daily"]
         code = cur["weather_code"]
-        tomorrow_code = daily["weather_code"][1] if len(daily["weather_code"]) > 1 else None
+        tomorrow_code = (
+            daily["weather_code"][1] if len(daily["weather_code"]) > 1 else None
+        )
         return {
             "location": city,
             "temp": str(round(cur["temperature_2m"])),
@@ -352,7 +383,8 @@ def get_weather() -> dict | None:
             "low": str(round(daily["temperature_2m_min"][0])),
             "tomorrow_temp": str(
                 round(
-                    (daily["temperature_2m_max"][1] + daily["temperature_2m_min"][1]) / 2,
+                    (daily["temperature_2m_max"][1] + daily["temperature_2m_min"][1])
+                    / 2,
                 ),
             )
             if len(daily["temperature_2m_max"]) > 1

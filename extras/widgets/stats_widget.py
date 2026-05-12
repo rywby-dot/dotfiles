@@ -199,27 +199,42 @@ def _render_cpu_ram(text: Text, line: int) -> int:
     return line + 1
 
 
-ACTION_BAT_CYCLE = "tuned-cycle"
+# Click x <= this on the battery row → toggle pct/time display.
+# Past this → cycle tuned profile (covers tag and bar).
+BAT_LEFT_ZONE_MAX = 15
+
+_battery_show_time = False
+
+
+def _toggle_battery_display() -> None:
+    global _battery_show_time  # noqa: PLW0603
+    _battery_show_time = not _battery_show_time
 
 
 def _render_battery(text: Text, line: int, slow: dict) -> int:
     bat = get_battery()
     if not bat:
         return line
-    pct, status, _time_rem = bat
+    pct, status, hours = bat
     icon = battery_icon(pct, status)
     color = bat_color(pct)
     profile = slow["profile"]
     tag = TUNED_ICON.get(profile, "?")
     text.append(f"   {icon}  ", style=color)
-    text.append(f"bat  {pct:3d}%")
+    label = (
+        f"bat  {hours:.1f}h"
+        if _battery_show_time and hours is not None
+        else f"bat  {pct:3d}%"
+    )
+    text.append(label)
+    remaining = PAD - len(label)
     if tag:
         text.append(f"   {tag}", style=color)
-        text.append(f"{'':>{PAD - 9 - 4}}")
+        text.append(f"{'':>{remaining - 4}}")
     else:
-        text.append(f"{'':>{PAD - 9}}")
+        text.append(f"{'':>{remaining}}")
     text.append(f"{progress_bar(pct)}\n", style=color)
-    click_map[line] = ACTION_BAT_CYCLE
+    click_map[line] = ("bat_zone", _toggle_battery_display, cycle_tuned_profile)
     return line + 1
 
 
@@ -315,11 +330,15 @@ try:
             if click is not None:
                 x, y = click
                 action = click_map.get(y)
-                if action == ACTION_BAT_CYCLE:
-                    cycle_tuned_profile()
-                    _slow_state["counter"] = (
-                        SLOW_POLL_INTERVAL  # force refresh next render
-                    )
+                if isinstance(action, tuple) and action[0] == "bat_zone":
+                    _, toggle_fn, cycle_fn = action
+                    if x <= BAT_LEFT_ZONE_MAX:
+                        toggle_fn()
+                    else:
+                        cycle_fn()
+                        _slow_state["counter"] = (
+                            SLOW_POLL_INTERVAL  # refresh next render
+                        )
                 elif isinstance(action, tuple):
                     kind, setter, fallback = action
                     pct = _bar_pct_from_x(x)
