@@ -111,6 +111,7 @@
 # bg_color = "#303030"           # title bar background (default: dark gray)
 # fg_color = "#FFFFFF"           # close button × color (default: white)
 # corner_radius = 10             # clip window corners to this radius
+# shadow = true                  # drop shadow under window chrome
 # default_mode = "client"        # decoration mode for windows without a rule.
                                  # "client":  CSD — client draws its own titlebar (default)
                                  # "minimal": SSD — no titlebar, just shadow + corners

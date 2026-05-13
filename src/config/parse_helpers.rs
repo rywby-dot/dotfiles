@@ -98,6 +98,7 @@ pub(super) fn parse_decoration_config(raw: DecorationFileConfig) -> DecorationCo
             defaults.border_color_focused,
             "border_color_focused",
         ),
+        shadow: raw.shadow.unwrap_or(defaults.shadow),
     }
 }
 

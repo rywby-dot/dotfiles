@@ -722,6 +722,8 @@ pub struct DecorationConfig {
     pub border_width: i32,
     pub border_color: [u8; 4],
     pub border_color_focused: [u8; 4],
+    /// Global drop-shadow toggle. Per-window `shadow` rules override this.
+    pub shadow: bool,
 }
 
 impl Default for DecorationConfig {
@@ -734,6 +736,7 @@ impl Default for DecorationConfig {
             border_width: 0,
             border_color: [0x30, 0x30, 0x30, 0xFF],
             border_color_focused: [0x30, 0x30, 0x30, 0xFF],
+            shadow: true,
         }
     }
 }
@@ -798,11 +801,12 @@ pub fn effective_corner_radius(
 pub fn effective_shadow_enabled(
     applied: Option<&AppliedWindowRule>,
     mode: &DecorationMode,
+    decorations: &DecorationConfig,
 ) -> bool {
     if let Some(s) = applied.and_then(|r| r.shadow) {
         return s;
     }
-    !matches!(mode, DecorationMode::None)
+    decorations.shadow && !matches!(mode, DecorationMode::None)
 }
 
 impl DecorationConfig {

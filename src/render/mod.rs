@@ -239,7 +239,11 @@ pub fn compose_frame(
             &state.config.decorations,
         );
         let effective_shadow = !is_fullscreen
-            && driftwm::config::effective_shadow_enabled(applied.as_ref(), effective_mode);
+            && driftwm::config::effective_shadow_enabled(
+                applied.as_ref(),
+                effective_mode,
+                &state.config.decorations,
+            );
 
         let mut bbox = window.bbox();
         bbox.loc += loc - geom_loc;

@@ -64,7 +64,8 @@ fn push_layer_chrome(
         &layer_mode,
         &state.config.decorations,
     );
-    let shadow_enabled = driftwm::config::effective_shadow_enabled(applied, &layer_mode);
+    let shadow_enabled =
+        driftwm::config::effective_shadow_enabled(applied, &layer_mode, &state.config.decorations);
 
     // Clone shaders so the immutable borrow on `state.render.*_shader` drops
     // before we reborrow `state.render.{border,shadow}_cache` mutably below.

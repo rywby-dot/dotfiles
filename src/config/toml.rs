@@ -177,6 +177,7 @@ pub(super) struct DecorationFileConfig {
     pub border_width: Option<i32>,
     pub border_color: Option<String>,
     pub border_color_focused: Option<String>,
+    pub shadow: Option<bool>,
 }
 
 /// Flexible `pass_keys` TOML value: `true`/`false` OR a list of key-combo strings.
