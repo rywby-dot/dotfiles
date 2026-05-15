@@ -18,6 +18,7 @@ pub struct SnapParams<'a> {
     pub threshold: f64,
     pub break_force: f64,
     pub same_edge: bool,
+    pub edge_center: bool,
 }
 
 /// Per-axis snap state: tracks the snapped coordinate and the natural position
@@ -45,13 +46,19 @@ fn try_candidate(best: &mut Option<(f64, f64)>, snap_pos: f64, dist: f64, thresh
 
 /// Find the best snap candidate along one axis.
 ///
-/// Opposite-edge candidates require strict perpendicular overlap (so a window
-/// only docks side-by-side to neighbors it actually visually overlaps).
-/// Same-edge candidates also fire when the windows are perpendicular-*adjacent*
-/// within `gap + threshold` — the perpendicular distance band where an
-/// opposite-edge snap on the other axis would engage. This makes same-edge
-/// an extension of opposite-edge: once two windows are stacked top-to-bottom,
-/// sliding one horizontally lets their left (or right) edges align.
+/// Three candidate families:
+/// - **Opposite-edge** (dragged right → other left, dragged left → other right)
+///   docks the windows side-by-side with a gap; requires strict perpendicular
+///   overlap (so a window only docks to neighbors it actually visually overlaps).
+/// - **Same-edge** (left↔left, right↔right) aligns parallel edges exactly.
+/// - **Edge-center** snaps the moved window's midpoint to the neighbor's
+///   midpoint along the moved axis (centers align along the perp axis).
+///
+/// Both alignment families fire only when the windows are perpendicular-
+/// *adjacent* within `gap + threshold` (the band where an opposite-edge snap
+/// on the other axis would engage). Alignment is intentionally rejected on
+/// any perp overlap — aligning left edges of two same-height windows would
+/// just Z-stack them.
 ///
 /// Returns `Some((snapped_origin, abs_distance))` for the closest candidate
 /// within `threshold`, or `None`.
@@ -67,10 +74,13 @@ pub fn find_snap_candidate(natural_edge_low: f64, p: &SnapParams<'_>) -> Option<
         };
 
         let perp_overlap = p.perp_high > other_perp_low && other_perp_high > p.perp_low;
-        let same_edge_eligible = p.same_edge
-            && (perp_overlap || perp_distance(p.perp_low, p.perp_high, other_perp_low, other_perp_high) < p.gap + p.threshold);
+        let alignment_eligible = !perp_overlap
+            && perp_distance(p.perp_low, p.perp_high, other_perp_low, other_perp_high)
+                < p.gap + p.threshold;
+        let same_edge_eligible = p.same_edge && alignment_eligible;
+        let edge_center_eligible = p.edge_center && alignment_eligible;
 
-        if !perp_overlap && !same_edge_eligible {
+        if !perp_overlap && !same_edge_eligible && !edge_center_eligible {
             continue;
         }
 
@@ -106,6 +116,16 @@ pub fn find_snap_candidate(natural_edge_low: f64, p: &SnapParams<'_>) -> Option<
                 &mut best,
                 other_high - p.extent,
                 (natural_edge_high - other_high).abs(),
+                p.threshold,
+            );
+        }
+
+        if edge_center_eligible {
+            let other_center = (other_low + other_high) / 2.0;
+            try_candidate(
+                &mut best,
+                other_center - p.extent / 2.0,
+                (natural_edge_low + p.extent / 2.0 - other_center).abs(),
                 p.threshold,
             );
         }
@@ -159,7 +179,9 @@ pub fn find_edge_snap(natural_edge: f64, p: &EdgeSnapParams<'_>) -> Option<(f64,
 
         let perp_overlap = p.perp_high > other_perp_low && other_perp_high > p.perp_low;
         let same_edge_eligible = p.same_edge
-            && (perp_overlap || perp_distance(p.perp_low, p.perp_high, other_perp_low, other_perp_high) < p.gap + p.threshold);
+            && !perp_overlap
+            && perp_distance(p.perp_low, p.perp_high, other_perp_low, other_perp_high)
+                < p.gap + p.threshold;
 
         if !perp_overlap && !same_edge_eligible {
             continue;

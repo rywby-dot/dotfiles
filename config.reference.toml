@@ -106,6 +106,7 @@
 # distance = 24.0              # activation threshold (screen px from edge)
 # break_force = 32.0           # screen px past snap to break free
 # same_edge = false            # also snap same edges (left-to-left, top-to-top)
+# edge_center = false          # also snap edge midpoints (centers align along the moved axis)
 
 [decorations]
 # bg_color = "#303030"           # title bar background (default: dark gray)
