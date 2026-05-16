@@ -182,19 +182,6 @@ window-search script that lets you search and jump to any open window.
 
 ## Install
 
-### Fedora (prebuilt binary)
-
-Built on Fedora 43, x86_64 only, requires glibc ≥ 2.39. aarch64 users:
-[build from source](#build-from-source).
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/malbiruk/driftwm/main/install.sh | sudo sh
-```
-
-Installs the binary, session wrapper, desktop entry, and shader wallpapers.
-Checks for required runtime libraries and tells you what to install if
-anything is missing. To uninstall, run with `sudo sh -s uninstall`.
-
 ### Arch Linux (AUR)
 
 ```bash
@@ -240,6 +227,8 @@ in
 
 Requires Rust 1.88+ (edition 2024).
 
+Install build dependencies:
+
 **Fedora:**
 
 ```bash
@@ -261,12 +250,16 @@ sudo pacman -S libdisplay-info libinput seatd mesa libxkbcommon
 > **Note:** Ubuntu 24.04 ships Rust 1.75 which is too old. Install via
 > [rustup](https://rustup.rs/) instead of `apt install rustc`.
 
+Then build and install:
+
 ```bash
 git clone https://github.com/malbiruk/driftwm.git
 cd driftwm
-cargo build --release
+make build
 sudo make install
 ```
+
+To uninstall, run `sudo make uninstall` from the repository.
 
 ### X11 support
 
