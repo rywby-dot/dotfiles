@@ -206,14 +206,23 @@ impl XdgShellHandler for DriftWm {
             .find(|w| w.wl_surface().as_deref() == Some(&wl_surface))
             .cloned();
         if let Some(ref window) = window {
-            // If this window had a parent, focus the parent (or its modal child)
-            let parent_focus = window.parent_surface().and_then(|ps| {
-                let parent = self.window_for_surface(&ps)?;
-                // If parent has another modal child, focus that instead
-                Some(self.topmost_modal_child(&parent)
-                    .filter(|mc| mc != window)
-                    .unwrap_or(parent))
-            });
+            // Pick a window to follow when the destroyed one was focused.
+            // Priority: explicit parent (xdg_toplevel.set_parent), then the
+            // MRU history entry that's spatially related (cluster member or
+            // overlap), then plain MRU. Spatial fallback covers transient/
+            // OAuth windows that auto-placement snapped near the launcher
+            // but don't carry a parent_surface relation.
+            let follow = window
+                .parent_surface()
+                .and_then(|ps| {
+                    let parent = self.window_for_surface(&ps)?;
+                    Some(
+                        self.topmost_modal_child(&parent)
+                            .filter(|mc| mc != window)
+                            .unwrap_or(parent),
+                    )
+                })
+                .or_else(|| self.first_spatially_related_in_history(window));
 
             let keyboard = self.seat.get_keyboard().unwrap();
             let current_focus = keyboard.current_focus();
@@ -226,8 +235,16 @@ impl XdgShellHandler for DriftWm {
                 .first()
                 .is_some_and(|last_focused| last_focused == window);
             if focus_on_this_toplevel || was_last_focused || no_keyboard_focus {
-                if let Some(parent_focus) = parent_focus {
-                    self.navigate_to_window(&parent_focus, false);
+                if let Some(target) = follow {
+                    // Pan only if the follow target isn't already fully on
+                    // screen — set_focus alone is enough when the user can
+                    // already see where focus is going.
+                    if self.window_fully_in_viewport(&target) {
+                        let serial = smithay::utils::SERIAL_COUNTER.next_serial();
+                        self.raise_and_focus(&target, serial);
+                    } else {
+                        self.navigate_to_window(&target, false);
+                    }
                 } else if let Some(fallback) = self
                     .focus_history
                     .iter()

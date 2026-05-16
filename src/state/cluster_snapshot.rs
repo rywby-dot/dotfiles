@@ -222,6 +222,13 @@ impl DriftWm {
             .collect()
     }
 
+    /// `SnapRect` (border + title-bar inflated) for a single window. Returns
+    /// `None` for widgets or unmapped windows.
+    pub fn snap_rect_for(&self, w: &Window) -> Option<driftwm::layout::snap::SnapRect> {
+        window_snap_rect(&self.space, &self.decorations, &self.config.decorations, w)
+            .map(|(_, r)| r)
+    }
+
     /// Snapshot the focused window's cluster for a move drag.
     ///
     /// Returns both the member offsets (from the primary's canvas position)
