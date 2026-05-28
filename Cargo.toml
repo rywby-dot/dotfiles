@@ -35,3 +35,7 @@ drm-ffi = "0.9"
 bytemuck = { version = "1.25", features = ["derive"] }
 cosmic-text = { version = "0.17.0", features = ["shape-run-cache"] }
 sd-notify = "0.4"
+
+[profile.release]
+lto = "thin"
+debug = "line-tables-only"
