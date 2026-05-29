@@ -8,7 +8,7 @@ use smithay::{
         keyboard::{ModifiersState, XkbConfig},
     },
     reexports::{
-        calloop::{LoopHandle, LoopSignal},
+        calloop::{LoopHandle, LoopSignal, ping::make_ping},
         wayland_protocols::xdg::shell::server::xdg_toplevel,
         wayland_server::DisplayHandle,
     },
@@ -60,6 +60,20 @@ impl DriftWm {
         loop_handle: LoopHandle<'static, DriftWm>,
         loop_signal: LoopSignal,
     ) -> Self {
+        // Scan system fonts off-thread so the first SSD title bar doesn't block
+        // the event loop on a cold ~1s `FontSystem::new()`. The scan pings the
+        // loop on completion to mark outputs dirty: udev renders are VBlank-gated,
+        // so a bar drawn textless during the scan would otherwise stay blank
+        // until some unrelated frame.
+        let (font_ping, font_ping_source) =
+            make_ping().expect("create font-ready ping");
+        loop_handle
+            .insert_source(font_ping_source, |_, _, data: &mut DriftWm| {
+                data.mark_all_dirty();
+            })
+            .expect("insert font-ready ping source");
+        driftwm::text::warm_fonts(move || font_ping.ping());
+
         let compositor_state = CompositorState::new_v6::<Self>(&dh);
         let xdg_shell_state = XdgShellState::new_with_capabilities::<Self>(
             &dh,

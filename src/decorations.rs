@@ -13,6 +13,9 @@ pub struct WindowDecoration {
     pub close_hovered: bool,
     pub scale: i32,
     pub title: String,
+    /// Font-load state at last render: flips a textless bar to re-render once
+    /// the background font scan lands.
+    fonts_ready: bool,
 }
 
 /// What the pointer is over in SSD decoration space.
@@ -36,6 +39,7 @@ impl WindowDecoration {
             close_hovered: false,
             scale,
             title: String::new(),
+            fonts_ready: driftwm::text::fonts_ready(),
         }
     }
 
@@ -48,16 +52,19 @@ impl WindowDecoration {
         title: &str,
         config: &DecorationConfig,
     ) -> bool {
+        let fonts_ready = driftwm::text::fonts_ready();
         if width == self.width
             && focused == self.focused
             && scale == self.scale
             && title == self.title
+            && fonts_ready == self.fonts_ready
         {
             return false;
         }
         self.width = width;
         self.focused = focused;
         self.scale = scale;
+        self.fonts_ready = fonts_ready;
         self.title.clear();
         self.title.push_str(title);
         self.title_bar =

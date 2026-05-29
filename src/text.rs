@@ -1,15 +1,17 @@
 //! SSD title bar text: shaping, measurement, and tail-ellipsis truncation,
 //! plus rasterization onto a CPU pixel buffer via cosmic-text.
 //!
-//! A single render thread drives all decoration rendering, so the `FontSystem`
-//! and `SwashCache` live in `thread_local!` cells — no locking needed. The
-//! first access scans system fonts (one-time cost).
+//! The system font scan is slow, so the shared `FontSystem` is warmed once on a
+//! background thread at startup (see `warm_fonts`) rather than lazily on the
+//! render thread, where it would freeze the event loop. `SwashCache` stays
+//! thread-local — it's only ever touched while rasterizing.
 //!
 //! With no fonts installed — a hermetic build sandbox, or a minimal system —
 //! every function here degrades to empty output instead of panicking, so the
 //! SSD simply renders a textless title bar.
 
 use std::cell::RefCell;
+use std::sync::{Mutex, OnceLock};
 
 use cosmic_text::{
     Attrs, Buffer, Color, Family, FontSystem, Metrics, Shaping, SwashCache, Weight, Wrap,
@@ -17,20 +19,59 @@ use cosmic_text::{
 
 use crate::config::FontWeight;
 
+// `FontSystem::new()` scans every system font face (~1s in release per
+// cosmic-text's docs); done lazily on first use it froze the single-threaded
+// event loop the instant a title bar rendered. Warmed on a background thread
+// instead (see `warm_fonts`); until it lands, text functions degrade to empty
+// output.
+static FONT_SYSTEM: OnceLock<Mutex<FontSystem>> = OnceLock::new();
+
 thread_local! {
-    static FONT_SYSTEM: RefCell<FontSystem> = RefCell::new(FontSystem::new());
+    // Only ever touched on the render thread, during rasterization.
     static SWASH_CACHE: RefCell<SwashCache> = RefCell::new(SwashCache::new());
 }
 
 /// Ellipsis appended to truncated titles.
 const ELLIPSIS: char = '…';
 
-/// Whether the font database holds at least one font. Empty in hermetic build
-/// sandboxes and on systems with no fonts installed; shaping anything in that
-/// state panics ("no default font found") deep inside cosmic-text, so the
-/// public functions below short-circuit instead.
+/// Start scanning system fonts on a background thread. Idempotent; call once at
+/// startup to keep the scan cost off the event-loop thread. `on_loaded` runs on
+/// the worker thread once fonts are available (hence `Send`).
+pub fn warm_fonts(on_loaded: impl FnOnce() + Send + 'static) {
+    if FONT_SYSTEM.get().is_some() {
+        on_loaded();
+        return;
+    }
+    let spawned = std::thread::Builder::new()
+        .name("driftwm-font-warm".into())
+        .spawn(move || {
+            let _ = FONT_SYSTEM.set(Mutex::new(FontSystem::new()));
+            on_loaded();
+        });
+    if let Err(err) = spawned {
+        tracing::warn!("failed to spawn font-warm thread: {err}");
+    }
+}
+
+/// Whether the background font scan has finished. Cheap enough to poll every
+/// frame so a textless title bar re-renders with text once the scan lands.
+pub fn fonts_ready() -> bool {
+    FONT_SYSTEM.get().is_some()
+}
+
+/// Run `f` with the shared `FontSystem`, or `None` if the background scan hasn't
+/// finished — callers degrade to empty output rather than block.
+fn with_font_system<R>(f: impl FnOnce(&mut FontSystem) -> R) -> Option<R> {
+    let mut fs = FONT_SYSTEM.get()?.lock().expect("font system mutex poisoned");
+    Some(f(&mut fs))
+}
+
+/// Whether the font database holds at least one font. False until the scan
+/// finishes, and on systems with no fonts installed (hermetic build sandboxes);
+/// shaping in that state panics ("no default font found") deep inside
+/// cosmic-text, so the public functions below short-circuit instead.
 fn fonts_available() -> bool {
-    FONT_SYSTEM.with_borrow(|fs| fs.db().faces().next().is_some())
+    with_font_system(|fs| fs.db().faces().next().is_some()).unwrap_or(false)
 }
 
 /// Map the generic CSS family names to cosmic-text's generic `Family` variants
@@ -81,13 +122,14 @@ pub fn measure(text: &str, font: &str, size: f32, weight: FontWeight) -> i32 {
     if text.is_empty() || !fonts_available() {
         return 0;
     }
-    FONT_SYSTEM.with_borrow_mut(|fs| {
+    with_font_system(|fs| {
         shape_line(fs, text, font, size, weight)
             .layout_runs()
             .map(|run| run.line_w)
             .fold(0.0_f32, f32::max)
             .ceil() as i32
     })
+    .unwrap_or(0)
 }
 
 /// Fit `text` into `max_width` pixels, tail-truncating with an ellipsis if it
@@ -151,7 +193,7 @@ pub fn rasterize_into(
     let base = Color::rgba(color[0], color[1], color[2], color[3]);
     let color_alpha = color[3] as f64 / 255.0;
 
-    FONT_SYSTEM.with_borrow_mut(|fs| {
+    with_font_system(|fs| {
         SWASH_CACHE.with_borrow_mut(|cache| {
             let mut buffer = shape_line(fs, text, font, size, weight);
             // Center the line vertically using its actual glyph metrics.
@@ -198,10 +240,16 @@ mod tests {
 
     const FONT: &str = "sans-serif";
 
+    /// Load fonts synchronously: tests have no background warm thread to await.
+    fn ensure_fonts() {
+        let _ = FONT_SYSTEM.set(Mutex::new(FontSystem::new()));
+    }
+
     #[test]
     fn measure_nonempty_is_positive() {
         // Skipped where no fonts exist (hermetic build sandboxes): there is
         // nothing to shape against, and the functions degrade to empty output.
+        ensure_fonts();
         if !fonts_available() {
             return;
         }
@@ -215,6 +263,7 @@ mod tests {
 
     #[test]
     fn fit_text_returns_full_when_it_fits() {
+        ensure_fonts();
         if !fonts_available() {
             return;
         }
@@ -225,6 +274,7 @@ mod tests {
 
     #[test]
     fn fit_text_ellipsizes_when_too_wide() {
+        ensure_fonts();
         if !fonts_available() {
             return;
         }
@@ -239,6 +289,7 @@ mod tests {
 
     #[test]
     fn fit_text_empty_when_ellipsis_does_not_fit() {
+        ensure_fonts();
         if !fonts_available() {
             return;
         }
