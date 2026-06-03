@@ -22,14 +22,12 @@ impl DriftWm {
             return;
         };
 
-        // A client re-asserting fullscreen must be idempotent. A toolkit that
-        // re-sends a fullscreen request while already fullscreen (e.g. osu! on
-        // focus changes) would otherwise hit the exit+re-enter path below, which
-        // recaptures `saved_size` from the window's *current* geometry — which
-        // is the fullscreen viewport size, since the windowed buffer was never
-        // committed in between. That corrupts saved_size to the full viewport,
-        // so a later exit "restores" to full size and toggling fullscreen can
-        // never recover. Re-send the configure and keep the existing saved_*.
+        // Re-asserting fullscreen while already fullscreen (some toolkits do
+        // this on focus changes) must be idempotent. Falling through to the
+        // exit+re-enter path would recapture `saved_size` from the window's
+        // current geometry — the fullscreen viewport size, since the windowed
+        // buffer was never committed in between — so a later exit "restores" to
+        // full size and toggling can never recover. Keep the existing saved_*.
         if self
             .fullscreen
             .get(&output)

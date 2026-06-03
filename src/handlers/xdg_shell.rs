@@ -199,16 +199,12 @@ impl XdgShellHandler for DriftWm {
         }
     }
 
-    // driftwm has no minimize concept (infinite canvas, no taskbar-backed
-    // hide/restore — see foreign_toplevel SetMinimized). But a client that
-    // minimizes itself stalls otherwise: the toolkit stops drawing and waits
-    // to be reactivated. xdg-shell carries no "minimized" state, so the toolkit
-    // only clears its internal minimized flag on a configure with `Activated` —
-    // which driftwm never sends on plain focus. Bounce the window back to
-    // active: refuse the minimize and force a wake-up configure so it stays
-    // responsive instead of freezing until the next size-changing configure.
+    // driftwm has no minimize concept, but a client that minimizes itself
+    // stalls: xdg-shell carries no "minimized" state, so the toolkit stops
+    // drawing and only clears its internal minimized flag on a configure with
+    // `Activated` — which driftwm never sends on plain focus. Refuse the
+    // minimize and send an `Activated` configure to wake it back up.
     fn minimize_request(&mut self, surface: ToplevelSurface) {
-        use smithay::reexports::wayland_protocols::xdg::shell::server::xdg_toplevel;
         surface.with_pending_state(|state| {
             state.states.set(xdg_toplevel::State::Activated);
         });
