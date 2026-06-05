@@ -180,11 +180,10 @@ fn collect_layer_popup_elements(
 pub(super) fn build_canvas_layer_elements(
     state: &mut crate::state::DriftWm,
     renderer: &mut GlesRenderer,
-    output: &Output,
+    output_scale: f64,
     camera: Point<f64, Logical>,
     zoom: f64,
 ) -> Vec<OutputRenderElements> {
-    let output_scale = output.current_scale().fractional_scale();
     let scale: Scale<f64> = output_scale.into();
     let mut elements = Vec::new();
 

@@ -89,7 +89,7 @@ driftwm msg screenshot window                         # focused window, isolated
 driftwm msg screenshot all --scale 2                  # all windows + background, 2× detail
 driftwm msg screenshot region 0 0 2000 1500           # canvas rect (center, Y-up)
 driftwm msg screenshot region $(slurp) --from-screen  # pick a region with slurp
-driftwm msg screenshot window -o - | wl-copy          # → clipboard, as an image
+driftwm msg screenshot window -o - | wl-copy          # capture window to clipboard
 ```
 
 Targets: **no subcommand** = the active output's viewport (what you see, minus

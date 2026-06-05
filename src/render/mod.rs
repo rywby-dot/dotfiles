@@ -494,15 +494,18 @@ pub(crate) fn compose_capture_elements(
         }
     }
 
-    // Normal windows stack above widgets (earlier = on top); background below
-    // both, matching compose_frame.
+    // Canvas-positioned layer widgets sit between normal windows and widget
+    // toplevels, as in compose_frame. Screen-anchored layer surfaces (panels) are
+    // excluded — they aren't canvas content.
+    let canvas_layers = build_canvas_layer_elements(state, renderer, output_scale, camera, zoom);
     let bg = capture_bg.tile_elements(
         camera,
         viewport_logical,
         state.start_time.elapsed().as_secs_f32(),
     );
-    let mut all = Vec::with_capacity(normal.len() + widgets.len() + bg.len());
+    let mut all = Vec::with_capacity(normal.len() + canvas_layers.len() + widgets.len() + bg.len());
     all.extend(normal);
+    all.extend(canvas_layers);
     all.extend(widgets);
     all.extend(bg);
     all
@@ -1022,7 +1025,8 @@ pub fn compose_frame(
     #[cfg(feature = "profile-with-tracy")]
     drop(_windows_span);
 
-    let canvas_layer_elements = build_canvas_layer_elements(state, renderer, output, camera, zoom);
+    let canvas_layer_elements =
+        build_canvas_layer_elements(state, renderer, output_scale, camera, zoom);
 
     let outline_elements =
         build_output_outline_elements(state, renderer, output, camera, zoom, viewport_size);
