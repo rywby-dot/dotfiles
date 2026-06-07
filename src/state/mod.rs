@@ -11,7 +11,6 @@ pub mod persistence;
 mod reload;
 mod render_cache;
 pub use cluster_snapshot::ClusterResizeSnapshot;
-pub(crate) use cluster_snapshot::snap_targets_impl;
 pub use cursor::{CursorFrames, CursorState};
 pub use errors::ErrorSource;
 pub use focus::FocusTarget;

@@ -3,14 +3,9 @@ mod hold;
 mod pinch;
 mod swipe;
 
-use smithay::{
-    desktop::Window,
-    reexports::wayland_protocols::xdg::shell::server::xdg_toplevel,
-    utils::{Logical, Point, Size},
-};
+use smithay::utils::{Logical, Point};
 
 use driftwm::config::{Action, Direction, ThresholdAction};
-use driftwm::layout::snap::SnapState;
 
 use crate::state::DriftWm;
 
@@ -20,18 +15,9 @@ pub enum GestureState {
     SwipePan,
     /// Double-tap+drag → move window via MoveSurfaceGrab on the pointer.
     SwipeMove,
-    /// Swipe → resize window (continuous).
-    SwipeResize {
-        window: Window,
-        edges: xdg_toplevel::ResizeEdge,
-        initial_location: Point<i32, Logical>,
-        initial_size: Size<i32, Logical>,
-        last_size: Size<i32, Logical>,
-        cumulative: Point<f64, Logical>,
-        snap: SnapState,
-        constraints: crate::grabs::SizeConstraints,
-        cluster_resize: crate::state::ClusterResizeSnapshot,
-    },
+    /// Swipe → resize window via ResizeSurfaceGrab on the pointer (gesture
+    /// updates warp the cursor; the grab does the resize math).
+    SwipeResizeGrab,
     /// Threshold swipe — accumulate delta, detect direction, fire once.
     SwipeThreshold {
         cumulative: Point<f64, Logical>,

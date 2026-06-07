@@ -325,48 +325,51 @@ impl PointerGrab<DriftWm> for ResizeSurfaceGrab {
     ) {
         handle.button(data, event);
         if handle.current_pressed().is_empty() {
-            // Grab released — unset Resizing state (Wayland only) and
-            // transition to WaitingForLastCommit for position adjustment
-            if let Some(toplevel) = self.window.toplevel() {
-                toplevel.with_pending_state(|state| {
-                    state.states.unset(xdg_toplevel::State::Resizing);
-                });
-                toplevel.send_pending_configure();
-            }
-
-            let Some(surface) = self.window.wl_surface().map(|s| s.into_owned()) else {
-                handle.unset_grab(self, data, event.serial, event.time, true);
-                return;
-            };
-            let edges = self.edges;
-            let initial_window_location = self.initial_window_location;
-            let initial_window_size = self.initial_window_size;
-            with_states(&surface, |states| {
-                states
-                    .data_map
-                    .get_or_insert(|| RefCell::new(ResizeState::Idle))
-                    .replace(ResizeState::WaitingForLastCommit {
-                        edges,
-                        initial_window_location,
-                        initial_window_size,
-                        initial_screen_pos: self.pinned_initial_screen_pos,
-                    });
-            });
-
-            for member in &self.cluster_resize.members {
-                if smithay::utils::IsAlive::alive(&member.window) {
-                    data.refresh_stable_snap_rect(&member.window);
-                }
-            }
-
             handle.unset_grab(self, data, event.serial, event.time, true);
         }
     }
 
     fn unset(&mut self, data: &mut DriftWm) {
+        self.finalize(data);
         data.cursor.grab_cursor = false;
         data.cursor.cursor_status = CursorImageStatus::default_named();
     }
 
     crate::grabs::forward_pointer_grab_methods!();
+}
+
+impl ResizeSurfaceGrab {
+    /// Wind down a resize: drop the Wayland `Resizing` state and arm the
+    /// commit-time reposition (`WaitingForLastCommit`) so a top/left-edge
+    /// resize keeps its opposite edge fixed (see `handle_resize_commit`).
+    /// Runs from `unset`, so the mouse button-release and the gesture-end
+    /// paths finalize identically — gestures deliver no button release.
+    fn finalize(&self, data: &mut DriftWm) {
+        if let Some(toplevel) = self.window.toplevel() {
+            toplevel.with_pending_state(|state| {
+                state.states.unset(xdg_toplevel::State::Resizing);
+            });
+            toplevel.send_pending_configure();
+        }
+
+        if let Some(surface) = self.window.wl_surface().map(|s| s.into_owned()) {
+            with_states(&surface, |states| {
+                states
+                    .data_map
+                    .get_or_insert(|| RefCell::new(ResizeState::Idle))
+                    .replace(ResizeState::WaitingForLastCommit {
+                        edges: self.edges,
+                        initial_window_location: self.initial_window_location,
+                        initial_window_size: self.initial_window_size,
+                        initial_screen_pos: self.pinned_initial_screen_pos,
+                    });
+            });
+        }
+
+        for member in &self.cluster_resize.members {
+            if smithay::utils::IsAlive::alive(&member.window) {
+                data.refresh_stable_snap_rect(&member.window);
+            }
+        }
+    }
 }

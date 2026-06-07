@@ -18,7 +18,7 @@ use smithay::{
         GrabStartData,
     },
     reexports::wayland_protocols::xdg::shell::server::xdg_toplevel,
-    utils::{Logical, Point, SERIAL_COUNTER, Size},
+    utils::{Logical, Point, SERIAL_COUNTER},
     wayland::{compositor::with_states, seat::WaylandFocus},
 };
 
@@ -26,11 +26,11 @@ use driftwm::canvas::{self, CanvasPos, canvas_to_screen};
 use driftwm::config::{
     Action, BindingContext, ContinuousAction, GestureConfigEntry, GestureTrigger, ThresholdAction,
 };
-use driftwm::layout::snap::{SnapState, snap_resize_edges};
+use driftwm::layout::snap::SnapState;
 
-use crate::grabs::{MoveSurfaceGrab, ResizeState, has_bottom, has_left, has_right, has_top};
+use crate::grabs::{MoveSurfaceGrab, ResizeState, ResizeSurfaceGrab};
 use crate::input::pointer::{edges_from_position, resize_cursor};
-use crate::state::{DriftWm, FocusTarget, output_state, snap_targets_impl};
+use crate::state::{DriftWm, FocusTarget};
 
 use super::{GestureState, direction_from_vector};
 
@@ -298,129 +298,30 @@ impl DriftWm {
                 }
                 self.warp_pointer(new_canvas);
             }
-            GestureState::SwipeResize {
-                window,
-                edges,
-                initial_location,
-                initial_size,
-                last_size,
-                cumulative,
-                snap,
-                constraints,
-                cluster_resize,
-            } => {
-                // Force focused_output back if it drifted during resize
-                if let Some(ref output) = self.gesture_output
-                    && self.focused_output.as_ref().is_some_and(|fo| fo != output)
-                {
-                    self.focused_output = Some(output.clone());
-                }
-
-                // Clamp gesture delta so the virtual pointer stays within the
-                // gesture output's bounds (screen space).
-                let clamped_delta = if let Some(ref output) = self.gesture_output {
-                    let (cam, zm) = {
-                        let os = crate::state::output_state(output);
-                        (os.camera, os.zoom)
-                    };
-                    let output_size = crate::state::output_logical_size(output);
-                    let pointer = self.seat.get_pointer().unwrap();
-                    let cur_screen =
-                        canvas_to_screen(CanvasPos(pointer.current_location()), cam, zm).0;
-                    drop(pointer);
-                    let new_screen: Point<f64, Logical> = (
-                        (cur_screen.x + delta.x).clamp(0.0, output_size.w as f64 - 1.0),
-                        (cur_screen.y + delta.y).clamp(0.0, output_size.h as f64 - 1.0),
-                    )
-                        .into();
-                    let clamped_dx = new_screen.x - cur_screen.x;
-                    let clamped_dy = new_screen.y - cur_screen.y;
-                    Point::from((clamped_dx / zm, clamped_dy / zm))
-                } else {
-                    Point::from((delta.x / zoom, delta.y / zoom))
+            GestureState::SwipeResizeGrab => {
+                // Warp the cursor (clamped to the grab's output); the grab does
+                // the resize math. Unlike SwipeMove there's no cross-output
+                // teleport — the grab forces the pointer back if input routing
+                // crosses, so a resize stays on one output.
+                let Some(output) = self.gesture_output.clone() else {
+                    return;
                 };
-                // Compute cursor warp target (applied after match to avoid borrow conflict)
+                let (camera, zoom) = {
+                    let os = crate::state::output_state(&output);
+                    (os.camera, os.zoom)
+                };
+                let output_size = crate::state::output_logical_size(&output);
                 let pointer = self.seat.get_pointer().unwrap();
-                let warp_target = pointer.current_location() + clamped_delta;
+                let cur_screen =
+                    canvas_to_screen(CanvasPos(pointer.current_location()), camera, zoom).0;
                 drop(pointer);
-
-                *cumulative += clamped_delta;
-
-                let mut new_w = initial_size.w;
-                let mut new_h = initial_size.h;
-                if has_left(*edges) {
-                    new_w -= cumulative.x as i32;
-                } else if has_right(*edges) {
-                    new_w += cumulative.x as i32;
-                }
-                if has_top(*edges) {
-                    new_h -= cumulative.y as i32;
-                } else if has_bottom(*edges) {
-                    new_h += cumulative.y as i32;
-                }
-                // Same client-hints clamp as `ResizeSurfaceGrab::motion`:
-                // applied before snap + cluster propagation so both see
-                // the real clamped size.
-                let (nw, nh) = constraints.clamp(new_w, new_h);
-                new_w = nw;
-                new_h = nh;
-
-                if self.config.snap_enabled
-                    && let Some(ref output) = self.gesture_output
-                    && let Some(self_surface) = window.wl_surface().map(|s| s.into_owned())
-                {
-                    let zoom = output_state(output).zoom;
-                    // Can't call self.snap_targets() here — gesture_state is
-                    // mutably borrowed by the match arm, so go through the
-                    // free function on disjoint field borrows instead.
-                    let (others, self_bar, self_bw) = snap_targets_impl(
-                        &self.space,
-                        &self.decorations,
-                        &self.config.decorations,
-                        &self.pinned,
-                        &self_surface,
-                        &cluster_resize.exclude,
-                    );
-
-                    snap_resize_edges(
-                        snap,
-                        *edges as u32,
-                        (initial_location.x, initial_location.y),
-                        (initial_size.w, initial_size.h),
-                        self_bar,
-                        self_bw,
-                        &mut new_w,
-                        &mut new_h,
-                        &others,
-                        zoom,
-                        self.config.snap_gap,
-                        self.config.snap_distance,
-                        self.config.snap_break_force,
-                        self.config.snap_same_edge,
-                    );
-                }
-
-                cluster_resize.apply_member_shifts(
-                    &mut self.space,
-                    window,
-                    *initial_size,
-                    new_w,
-                    new_h,
-                    self.config.snap_gap,
-                );
-
-                let new_size = Size::from((new_w, new_h));
-                if new_size != *last_size {
-                    *last_size = new_size;
-                    if let Some(toplevel) = window.toplevel() {
-                        toplevel.with_pending_state(|state| {
-                            state.size = Some(new_size);
-                            state.states.set(xdg_toplevel::State::Resizing);
-                        });
-                        toplevel.send_pending_configure();
-                    }
-                }
-
+                let new_screen: Point<f64, Logical> = (
+                    (cur_screen.x + delta.x).clamp(0.0, output_size.w as f64 - 1.0),
+                    (cur_screen.y + delta.y).clamp(0.0, output_size.h as f64 - 1.0),
+                )
+                    .into();
+                let warp_target =
+                    canvas::screen_to_canvas(canvas::ScreenPos(new_screen), camera, zoom).0;
                 self.warp_pointer(warp_target);
             }
             GestureState::SwipeThreshold {
@@ -487,37 +388,12 @@ impl DriftWm {
                 let pointer = self.seat.get_pointer().unwrap();
                 pointer.unset_grab(self, serial, time);
             }
-            GestureState::SwipeResize {
-                window,
-                edges,
-                initial_location,
-                initial_size,
-                ..
-            } => {
-                if let Some(toplevel) = window.toplevel() {
-                    toplevel.with_pending_state(|state| {
-                        state.states.unset(xdg_toplevel::State::Resizing);
-                    });
-                    toplevel.send_pending_configure();
-                }
-
-                if let Some(surface) = window.wl_surface().map(|s| s.into_owned()) {
-                    with_states(&surface, |states| {
-                        states
-                            .data_map
-                            .get_or_insert(|| RefCell::new(ResizeState::Idle))
-                            .replace(ResizeState::WaitingForLastCommit {
-                                edges,
-                                initial_window_location: initial_location,
-                                initial_window_size: initial_size,
-                                // Gesture resize excludes pinned windows.
-                                initial_screen_pos: None,
-                            });
-                    });
-                }
-
-                self.cursor.grab_cursor = false;
-                self.cursor.cursor_status = CursorImageStatus::default_named();
+            GestureState::SwipeResizeGrab => {
+                // No button release on a gesture, so unset the grab here; its
+                // `unset` finalizes the resize, same as the button-release path.
+                let serial = SERIAL_COUNTER.next_serial();
+                let pointer = self.seat.get_pointer().unwrap();
+                pointer.unset_grab(self, serial, time);
             }
             GestureState::SwipeThreshold { fired: false, .. } if !cancelled => {
                 // Short swipe that didn't reach threshold — no action
@@ -576,12 +452,12 @@ impl DriftWm {
         self.gesture_state = Some(GestureState::SwipeMove);
     }
 
-    /// Enter Swipe3Resize state: store initial geometry, set resize state + cursor.
+    /// Set up a ResizeSurfaceGrab on the pointer so gesture updates just warp
+    /// the cursor and the grab handles the resize (mirrors `start_gesture_move`
+    /// / Alt+RMB drag). Gesture resize excludes pinned windows, so all the
+    /// pinned-resize fields stay `None`/empty.
     ///
-    /// `want_cluster = true` opts into snapped-neighbor propagation (the
-    /// gesture caller picked `ContinuousAction::ResizeWindowSnapped`); `false`
-    /// keeps resize strictly single-window by handing the grab an empty
-    /// cluster snapshot.
+    /// `want_cluster = true` opts into snapped-neighbor propagation.
     fn start_gesture_resize(
         &mut self,
         window: Window,
@@ -615,7 +491,6 @@ impl DriftWm {
                     edges,
                     initial_window_location: initial_location,
                     initial_window_size: initial_size,
-                    // Gesture resize excludes pinned windows.
                     initial_screen_pos: None,
                 });
         });
@@ -638,17 +513,31 @@ impl DriftWm {
             crate::state::ClusterResizeSnapshot::empty()
         };
         let constraints = crate::grabs::SizeConstraints::for_window(&window);
-        self.gesture_state = Some(GestureState::SwipeResize {
+        let Some(output) = self.active_output() else {
+            return;
+        };
+        let grab = ResizeSurfaceGrab {
+            start_data: GrabStartData {
+                focus: None,
+                button: 0, // no physical button — gesture-initiated
+                location: pos,
+            },
             window,
             edges,
-            initial_location,
-            initial_size,
-            last_size: initial_size,
-            cumulative: Point::from((0.0, 0.0)),
+            initial_window_location: initial_location,
+            initial_window_size: initial_size,
+            last_window_size: initial_size,
+            output,
+            last_clamped_location: pos,
             snap: SnapState::default(),
             constraints,
             cluster_resize,
-        });
+            pinned_initial_screen_pos: None,
+        };
+        let pointer = self.seat.get_pointer().unwrap();
+        pointer.set_grab(self, grab, serial, Focus::Clear);
+
+        self.gesture_state = Some(GestureState::SwipeResizeGrab);
     }
 
     /// Execute a threshold action, injecting direction from the swipe vector for CenterNearest.
