@@ -224,7 +224,8 @@ pub fn init_winit(
                 1.0,
             );
             let mut age = backend.buffer_age().unwrap_or(0);
-            if !data.render.cached_tile_bg.is_empty() && (camera_moved || zoom_changed) {
+            if data.render.cached_bg.values().any(|b| b.is_tile()) && (camera_moved || zoom_changed)
+            {
                 age = 0;
             }
             // Force full redraw when animated background is visible through transparent windows.

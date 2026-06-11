@@ -33,16 +33,13 @@ pub struct RenderCache {
     pub blur_camera_generation: u64,
     pub shadow_cache: HashMap<ObjectId, ShadowCacheEntry>,
     pub border_cache: HashMap<ObjectId, BorderCacheEntry>,
-    pub cached_bg_elements: HashMap<String, PixelShaderElement>,
+    /// One element per output for the configured background (shader / tile /
+    /// wallpaper / textured shader — the mode lives inside `BackgroundElement`).
+    /// Reload and output-disconnect clear it.
+    pub cached_bg: HashMap<String, crate::render::BackgroundElement>,
     pub capture_state: HashMap<String, CaptureOutputState>,
     pub tile_shader: Option<GlesTexProgram>,
-    pub cached_tile_bg: HashMap<String, crate::render::TileShaderElement>,
     pub wallpaper_shader: Option<GlesTexProgram>,
-    pub cached_wallpaper_bg: HashMap<String, crate::render::TileShaderElement>,
-    /// Per-output elements for a `type = "shader"` background that samples a
-    /// `texture`. Compiled per output (no shared program slot), so reload only
-    /// clears this map.
-    pub cached_textured_shader_bg: HashMap<String, crate::render::TileShaderElement>,
     pub cached_error_bar: HashMap<String, crate::render::ErrorBarCache>,
     /// Pass-through fragment shader cloned into each `BgChunkCache`.
     pub chunk_bg_shader: Option<GlesTexProgram>,
@@ -70,13 +67,10 @@ impl RenderCache {
             blur_camera_generation: 0,
             shadow_cache: HashMap::new(),
             border_cache: HashMap::new(),
-            cached_bg_elements: HashMap::new(),
+            cached_bg: HashMap::new(),
             capture_state: HashMap::new(),
             tile_shader: None,
-            cached_tile_bg: HashMap::new(),
             wallpaper_shader: None,
-            cached_wallpaper_bg: HashMap::new(),
-            cached_textured_shader_bg: HashMap::new(),
             cached_error_bar: HashMap::new(),
             chunk_bg_shader: None,
             cached_tile_chunks: HashMap::new(),
@@ -102,10 +96,7 @@ impl RenderCache {
     /// disconnect/remap so a later reconnect re-runs `init_background` instead
     /// of reusing a stale element with the previous geometry.
     pub fn remove_output(&mut self, output_name: &str) {
-        self.cached_bg_elements.remove(output_name);
-        self.cached_tile_bg.remove(output_name);
-        self.cached_wallpaper_bg.remove(output_name);
-        self.cached_textured_shader_bg.remove(output_name);
+        self.cached_bg.remove(output_name);
         self.cached_error_bar.remove(output_name);
         self.remove_background_chunks(output_name);
         self.remove_capture_state(output_name);

@@ -14,7 +14,7 @@ mod tile_chunks;
 mod tile_chunks_tiff;
 mod tile_worker;
 
-pub use background::{init_background, update_background_element};
+pub use background::{BackgroundElement, init_background, update_background_element};
 pub use blur::BlurCache;
 pub(crate) use blur::compile_blur_shaders;
 pub use capture::{render_capture_frames, render_screencopy, render_toplevel_captures};
@@ -45,7 +45,6 @@ use smithay::backend::renderer::{
         AsRenderElements, Kind,
         memory::{MemoryRenderBuffer, MemoryRenderBufferRenderElement},
         surface::WaylandSurfaceRenderElement,
-        utils::RescaleRenderElement,
     },
     gles::{GlesRenderer, GlesTexProgram},
 };
@@ -539,10 +538,7 @@ pub fn compose_frame(
         // Fullscreen fully occludes the canvas: free its chunk caches and skip
         // the background. Maximize is NOT fullscreen, so it keeps its background.
         state.render.remove_background_chunks(&name);
-    } else if !state.render.cached_bg_elements.contains_key(&name)
-        && !state.render.cached_tile_bg.contains_key(&name)
-        && !state.render.cached_wallpaper_bg.contains_key(&name)
-        && !state.render.cached_textured_shader_bg.contains_key(&name)
+    } else if !state.render.cached_bg.contains_key(&name)
         && !state.render.cached_tile_chunks.contains_key(&name)
         && !state.render.cached_shader_chunks.contains_key(&name)
     {
@@ -1107,35 +1103,8 @@ pub fn compose_frame(
             .into_iter()
             .map(OutputRenderElements::TileBgChunk)
             .collect()
-    } else if let Some(elem) = state.render.cached_bg_elements.get(&output.name()) {
-        vec![OutputRenderElements::Background(
-            RescaleRenderElement::from_element(
-                elem.clone(),
-                Point::<i32, Physical>::from((0, 0)),
-                zoom,
-            ),
-        )]
-    } else if let Some(elem) = state.render.cached_tile_bg.get(&output.name()) {
-        vec![OutputRenderElements::TileBg(
-            RescaleRenderElement::from_element(
-                elem.clone(),
-                Point::<i32, Physical>::from((0, 0)),
-                zoom,
-            ),
-        )]
-    } else if let Some(elem) = state.render.cached_wallpaper_bg.get(&output.name()) {
-        // Viewport-fixed: no zoom rescale, element area is already in output coords.
-        vec![OutputRenderElements::WallpaperBg(elem.clone())]
-    } else if let Some(elem) = state.render.cached_textured_shader_bg.get(&output.name()) {
-        // Same canvas-sized, zoom-rescaled display as the plain shader bg; reuses
-        // the TileBg variant since the element is a TileShaderElement.
-        vec![OutputRenderElements::TileBg(
-            RescaleRenderElement::from_element(
-                elem.clone(),
-                Point::<i32, Physical>::from((0, 0)),
-                zoom,
-            ),
-        )]
+    } else if let Some(bg) = state.render.cached_bg.get(&output.name()) {
+        vec![bg.render_element(zoom)]
     } else {
         vec![]
     };

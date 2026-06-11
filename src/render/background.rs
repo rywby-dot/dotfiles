@@ -1,19 +1,144 @@
 use smithay::backend::allocator::Fourcc;
-use smithay::backend::renderer::element::Kind;
+use smithay::backend::renderer::element::{Kind, utils::RescaleRenderElement};
 use smithay::backend::renderer::gles::{
     GlesRenderer, GlesTexture, Uniform, element::PixelShaderElement,
 };
 use smithay::output::Output;
-use smithay::utils::{Logical, Point, Rectangle, Size};
+use smithay::utils::{Logical, Physical, Point, Rectangle, Size};
 
 use driftwm::config::BackgroundKind;
 
-use super::elements::TileShaderElement;
+use super::elements::{OutputRenderElements, TileShaderElement};
 use super::shaders::{
     BG_UNIFORMS, compile_textured_bg_shader, compile_tile_bg_shader, compile_wallpaper_bg_shader,
 };
 
-/// Update the cached background shader element for the current camera/zoom.
+/// The per-output canvas background, one variant per background mode. Owns its
+/// opaque-region policy (via [`bg_opaque_regions`]) so construction and the
+/// per-frame [`BackgroundElement::update`] derive opacity the same way — a
+/// `resize` can never silently flip the element back to opaque.
+pub struct BackgroundElement {
+    kind: BgKind,
+    /// Composite with alpha so whatever sits below shows through.
+    transparent: bool,
+}
+
+enum BgKind {
+    /// Procedural `PixelShaderElement` — dot grid or a `type = "shader"` source.
+    Shader(PixelShaderElement),
+    /// Image tiled across the canvas (`tile_bg.glsl`), scrolls with the camera.
+    Tile(TileShaderElement),
+    /// Single image stretched to the viewport (`wallpaper_bg.glsl`), fixed.
+    Wallpaper(TileShaderElement),
+    /// `type = "shader"` sampling a bound `texture` (`compile_textured_bg_shader`).
+    TexturedShader(TileShaderElement),
+}
+
+/// Opaque regions for a background covering `area`: the whole area unless it
+/// composites with alpha. Single source of truth shared by element construction
+/// and the per-frame resize, so the two can't disagree.
+fn bg_opaque_regions(
+    transparent: bool,
+    area: Rectangle<i32, Logical>,
+) -> Option<Vec<Rectangle<i32, Logical>>> {
+    if transparent {
+        None
+    } else {
+        Some(vec![area])
+    }
+}
+
+/// Per-frame viewport inputs for [`BackgroundElement::update`].
+struct BgFrame {
+    canvas_area: Rectangle<i32, Logical>,
+    output_size: Size<i32, Logical>,
+    canvas_w: i32,
+    canvas_h: i32,
+    camera: Point<f64, Logical>,
+    zoom: f64,
+    camera_moved: bool,
+    zoom_changed: bool,
+    uniforms_stale: bool,
+    time_secs: f32,
+}
+
+impl BackgroundElement {
+    /// True for the camera-scrolling tiled image, whose uniforms move on every
+    /// camera/zoom change — the winit backend forces a full redraw for it.
+    pub fn is_tile(&self) -> bool {
+        matches!(self.kind, BgKind::Tile(_))
+    }
+
+    /// The render element for this frame, z-ordered as the canvas background.
+    pub fn render_element(&self, zoom: f64) -> OutputRenderElements {
+        let origin = Point::<i32, Physical>::from((0, 0));
+        match &self.kind {
+            BgKind::Shader(e) => OutputRenderElements::Background(
+                RescaleRenderElement::from_element(e.clone(), origin, zoom),
+            ),
+            // Tile and textured-shader share the canvas-sized, zoom-rescaled path.
+            BgKind::Tile(e) | BgKind::TexturedShader(e) => OutputRenderElements::TileBg(
+                RescaleRenderElement::from_element(e.clone(), origin, zoom),
+            ),
+            // Viewport-fixed: already in output coords, no zoom rescale.
+            BgKind::Wallpaper(e) => OutputRenderElements::WallpaperBg(e.clone()),
+        }
+    }
+
+    /// Resize to the current viewport and refresh the uniforms each mode
+    /// consumes. Opacity is re-derived from `self.transparent` every frame, so
+    /// it survives the resize regardless of what the previous frame set.
+    fn update(&mut self, f: &BgFrame) {
+        let transparent = self.transparent;
+        match &mut self.kind {
+            BgKind::Shader(e) => {
+                e.resize(f.canvas_area, bg_opaque_regions(transparent, f.canvas_area));
+                if f.uniforms_stale {
+                    e.update_uniforms(vec![
+                        Uniform::new("u_camera", (f.camera.x as f32, f.camera.y as f32)),
+                        Uniform::new("u_time", f.time_secs),
+                        Uniform::new("u_zoom", f.zoom as f32),
+                    ]);
+                }
+            }
+            BgKind::Tile(e) => {
+                e.resize(f.canvas_area, bg_opaque_regions(transparent, f.canvas_area));
+                if f.camera_moved || f.zoom_changed {
+                    e.update_uniforms(vec![
+                        Uniform::new("u_camera", (f.camera.x as f32, f.camera.y as f32)),
+                        Uniform::new("u_tile_size", (e.tex_w as f32, e.tex_h as f32)),
+                        Uniform::new("u_output_size", (f.canvas_w as f32, f.canvas_h as f32)),
+                    ]);
+                }
+            }
+            BgKind::Wallpaper(e) => {
+                // Viewport-fixed: size to the output (not the canvas), and never
+                // push uniforms. A stable CommitCounter across pans/zooms is the
+                // whole point of wallpaper mode being cheaper than tile mode —
+                // blur and elements above don't get damaged for background reasons.
+                let output_area = Rectangle::from_size(f.output_size);
+                e.resize(output_area, bg_opaque_regions(transparent, output_area));
+            }
+            BgKind::TexturedShader(e) => {
+                // Scrolls/zooms like the plain shader bg. `u_output_size` co-varies
+                // with zoom (= output / zoom), so also refresh on zoom_changed even
+                // when the shader reads no camera/zoom/time uniform.
+                e.resize(f.canvas_area, bg_opaque_regions(transparent, f.canvas_area));
+                if f.uniforms_stale || f.zoom_changed {
+                    e.update_uniforms(vec![
+                        Uniform::new("u_camera", (f.camera.x as f32, f.camera.y as f32)),
+                        Uniform::new("u_time", f.time_secs),
+                        Uniform::new("u_zoom", f.zoom as f32),
+                        Uniform::new("u_output_size", (f.canvas_w as f32, f.canvas_h as f32)),
+                        Uniform::new("u_texture_size", (e.tex_w as f32, e.tex_h as f32)),
+                    ]);
+                }
+            }
+        }
+    }
+}
+
+/// Update the cached background element for the current camera/zoom.
 /// Returns (camera_moved, zoom_changed) for the caller's damage logic.
 pub fn update_background_element(
     state: &mut crate::state::DriftWm,
@@ -38,47 +163,20 @@ pub fn update_background_element(
         || (zoom_changed && state.render.background_uses_zoom)
         || state.render.background_is_animated;
 
-    if let Some(elem) = state.render.cached_bg_elements.get_mut(&output_name) {
-        elem.resize(canvas_area, Some(vec![canvas_area]));
-        if uniforms_stale {
-            let time_secs = state.start_time.elapsed().as_secs_f32();
-            elem.update_uniforms(vec![
-                Uniform::new("u_camera", (cur_camera.x as f32, cur_camera.y as f32)),
-                Uniform::new("u_time", time_secs),
-                Uniform::new("u_zoom", cur_zoom as f32),
-            ]);
-        }
-    } else if let Some(elem) = state.render.cached_tile_bg.get_mut(&output_name) {
-        elem.resize(canvas_area, Some(vec![canvas_area]));
-        if camera_moved || zoom_changed {
-            elem.update_uniforms(vec![
-                Uniform::new("u_camera", (cur_camera.x as f32, cur_camera.y as f32)),
-                Uniform::new("u_tile_size", (elem.tex_w as f32, elem.tex_h as f32)),
-                Uniform::new("u_output_size", (canvas_w as f32, canvas_h as f32)),
-            ]);
-        }
-    } else if let Some(elem) = state.render.cached_wallpaper_bg.get_mut(&output_name) {
-        // Viewport-fixed: size to the output (not the canvas), and never push uniforms.
-        // Skipping update_uniforms keeps the CommitCounter stable across pans/zooms,
-        // which is the whole point of wallpaper mode being cheaper than tile mode —
-        // blur and elements above don't get damaged for background reasons.
-        let output_area = Rectangle::from_size(output_size);
-        elem.resize(output_area, Some(vec![output_area]));
-    } else if let Some(elem) = state.render.cached_textured_shader_bg.get_mut(&output_name) {
-        // Scrolls/zooms like the plain shader bg. `u_output_size` co-varies with
-        // zoom (= output / zoom), so also refresh on zoom_changed even when the
-        // shader reads no camera/zoom/time uniform.
-        elem.resize(canvas_area, Some(vec![canvas_area]));
-        if uniforms_stale || zoom_changed {
-            let time_secs = state.start_time.elapsed().as_secs_f32();
-            elem.update_uniforms(vec![
-                Uniform::new("u_camera", (cur_camera.x as f32, cur_camera.y as f32)),
-                Uniform::new("u_time", time_secs),
-                Uniform::new("u_zoom", cur_zoom as f32),
-                Uniform::new("u_output_size", (canvas_w as f32, canvas_h as f32)),
-                Uniform::new("u_texture_size", (elem.tex_w as f32, elem.tex_h as f32)),
-            ]);
-        }
+    let frame = BgFrame {
+        canvas_area,
+        output_size,
+        canvas_w,
+        canvas_h,
+        camera: cur_camera,
+        zoom: cur_zoom,
+        camera_moved,
+        zoom_changed,
+        uniforms_stale,
+        time_secs: state.start_time.elapsed().as_secs_f32(),
+    };
+    if let Some(bg) = state.render.cached_bg.get_mut(&output_name) {
+        bg.update(&frame);
     }
     (camera_moved, zoom_changed)
 }
@@ -404,22 +502,26 @@ fn try_init_texture_bg(
         // Wallpaper shader has no camera/zoom/time uniforms — image stretches to v_coords [0,1].
         TextureBgMode::Wallpaper => vec![],
     };
+    let transparent = false;
     let elem = TileShaderElement::new(
         shader,
         texture,
         w,
         h,
         area,
-        Some(vec![area]),
+        bg_opaque_regions(transparent, area),
         1.0,
         uniforms,
         Kind::Unspecified,
     );
-    let target = match mode {
-        TextureBgMode::Tile => &mut state.render.cached_tile_bg,
-        TextureBgMode::Wallpaper => &mut state.render.cached_wallpaper_bg,
+    let kind = match mode {
+        TextureBgMode::Tile => BgKind::Tile(elem),
+        TextureBgMode::Wallpaper => BgKind::Wallpaper(elem),
     };
-    target.insert(output_name.to_string(), elem);
+    state
+        .render
+        .cached_bg
+        .insert(output_name.to_string(), BackgroundElement { kind, transparent });
     // Clear stale flags from a prior shader-mode bg — otherwise they'd
     // force every-frame redraws or push uniforms into a texture program
     // that doesn't declare them.
@@ -478,13 +580,14 @@ fn try_init_textured_shader_bg(
         ),
         Uniform::new("u_texture_size", (w as f32, h as f32)),
     ];
+    let transparent = false;
     let elem = TileShaderElement::new(
         shader,
         tex,
         w,
         h,
         area,
-        Some(vec![area]),
+        bg_opaque_regions(transparent, area),
         1.0,
         uniforms,
         Kind::Unspecified,
@@ -493,10 +596,13 @@ fn try_init_textured_shader_bg(
     state.render.background_is_animated = references_uniform(&src, "float", "u_time");
     state.render.background_uses_camera = references_uniform(&src, "vec2", "u_camera");
     state.render.background_uses_zoom = references_uniform(&src, "float", "u_zoom");
-    state
-        .render
-        .cached_textured_shader_bg
-        .insert(output_name.to_string(), elem);
+    state.render.cached_bg.insert(
+        output_name.to_string(),
+        BackgroundElement {
+            kind: BgKind::TexturedShader(elem),
+            transparent,
+        },
+    );
     Ok(())
 }
 
@@ -582,21 +688,26 @@ fn init_shader_bg(
     };
 
     let area = Rectangle::from_size(initial_size);
+    let transparent = false;
     let time_secs = state.start_time.elapsed().as_secs_f32();
-    state.render.cached_bg_elements.insert(
+    let elem = PixelShaderElement::new(
+        shader,
+        area,
+        bg_opaque_regions(transparent, area),
+        1.0,
+        vec![
+            Uniform::new("u_camera", (0.0f32, 0.0f32)),
+            Uniform::new("u_time", time_secs),
+            Uniform::new("u_zoom", 1.0f32),
+        ],
+        Kind::Unspecified,
+    );
+    state.render.cached_bg.insert(
         output_name.to_string(),
-        PixelShaderElement::new(
-            shader,
-            area,
-            Some(vec![area]),
-            1.0,
-            vec![
-                Uniform::new("u_camera", (0.0f32, 0.0f32)),
-                Uniform::new("u_time", time_secs),
-                Uniform::new("u_zoom", 1.0f32),
-            ],
-            Kind::Unspecified,
-        ),
+        BackgroundElement {
+            kind: BgKind::Shader(elem),
+            transparent,
+        },
     );
 
     outcome
@@ -654,21 +765,26 @@ fn init_default_shader_bg(
     };
 
     let area = Rectangle::from_size(initial_size);
+    let transparent = false;
     let time_secs = state.start_time.elapsed().as_secs_f32();
-    state.render.cached_bg_elements.insert(
+    let elem = PixelShaderElement::new(
+        shader,
+        area,
+        bg_opaque_regions(transparent, area),
+        1.0,
+        vec![
+            Uniform::new("u_camera", (0.0f32, 0.0f32)),
+            Uniform::new("u_time", time_secs),
+            Uniform::new("u_zoom", 1.0f32),
+        ],
+        Kind::Unspecified,
+    );
+    state.render.cached_bg.insert(
         output_name.to_string(),
-        PixelShaderElement::new(
-            shader,
-            area,
-            Some(vec![area]),
-            1.0,
-            vec![
-                Uniform::new("u_camera", (0.0f32, 0.0f32)),
-                Uniform::new("u_time", time_secs),
-                Uniform::new("u_zoom", 1.0f32),
-            ],
-            Kind::Unspecified,
-        ),
+        BackgroundElement {
+            kind: BgKind::Shader(elem),
+            transparent,
+        },
     );
 }
 
