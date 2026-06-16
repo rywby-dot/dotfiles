@@ -53,6 +53,7 @@ impl DriftWm {
             self.gesture_output = self.active_output();
             self.gesture_state = Some(GestureState::PinchZoom {
                 initial_zoom: self.zoom(),
+                min_zoom: self.min_zoom(),
             });
             return;
         }
@@ -102,8 +103,11 @@ impl DriftWm {
         };
 
         match state {
-            GestureState::PinchZoom { initial_zoom } => {
-                let new_zoom = (*initial_zoom * scale).clamp(self.min_zoom(), canvas::MAX_ZOOM);
+            GestureState::PinchZoom {
+                initial_zoom,
+                min_zoom,
+            } => {
+                let new_zoom = (*initial_zoom * scale).clamp(*min_zoom, canvas::MAX_ZOOM);
 
                 let (cur_zoom, cur_camera) = self.gesture_camera_zoom();
                 if new_zoom != cur_zoom {

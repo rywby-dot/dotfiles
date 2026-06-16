@@ -30,8 +30,9 @@ pub enum GestureState {
         /// 8-direction fallback from the Swipe trigger's threshold action.
         directional: Option<ThresholdAction>,
     },
-    /// Continuous pinch → cursor-anchored zoom.
-    PinchZoom { initial_zoom: f64 },
+    /// Continuous pinch → cursor-anchored zoom. `min_zoom` is captured at begin
+    /// (it does a full window scan) so update events don't recompute it.
+    PinchZoom { initial_zoom: f64, min_zoom: f64 },
     /// Pinch forwarded to client (unbound in this context).
     PinchForward,
     /// Threshold pinch — pinch-in/out fire discrete actions.
