@@ -246,14 +246,23 @@ pub(crate) fn render_if_needed(data: &mut DriftWm) {
         }
     }
 
-    // Global animations (key repeat, cursor, animated bg) → every output.
+    // Global animations (key repeat, cursor) → every output.
     if data.held_action.is_some()
         || data.cursor.exec_cursor_show_at.is_some()
         || data.cursor.exec_cursor_deadline.is_some()
         || data.cursor_is_animated()
-        || data.render.background_is_animated
     {
         data.mark_all_dirty();
+    } else if data.render.background_is_animated {
+        // Fullscreen outputs skip the background entirely, so an animated bg
+        // gives them nothing to redraw — marking them just burns battery.
+        let dirty: Vec<_> = data
+            .active_outputs
+            .iter()
+            .filter(|o| !data.is_output_fullscreen(o))
+            .cloned()
+            .collect();
+        data.redraws_needed.extend(dirty);
     }
 
     // 4. Foreign toplevel refresh (once per frame, not per-output)
