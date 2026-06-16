@@ -13,17 +13,33 @@ Method: code reading, niri cross-reference, Tracy traces — see
   client (commit `8687627`; resync coalesced to one motion per frame).
 - ✅ **Pan stutter root-caused** — AGX firmware GPU power states, not
   compositor work. Not fixable in driftwm today; see Part 2.
-- → **Next: B1–B4** (input dirty-marking, canvas-layer widgets, winit loop,
-  animated-bg occlusion).
-- → **Then: blur optimizations** (B5 multi-output churn + S1 pan-time
-  recompute + FBO retention).
-- Backlog: B6–B15, latent frame-spike items, niri pattern adoptions (Part 3).
+- ✅ **Perf push done (2026-06-16)** — B2, B3, B4, B6, B10 shipped (commits
+  `1a9fe99` / `721232e` / `b5e1cd6` / `9843984` / `d685dcc`); each marked inline
+  below. **B1 deliberately skipped** — rationale at its entry. The push was
+  re-scoped mid-stream toward single-monitor laptop battery, which pulled B6 and
+  B10 forward out of the backlog.
+- → **Next: blur optimizations** (B5 multi-output churn + S1 pan-time recompute
+  + FBO retention) — the main remaining *structured* work; deprioritized behind
+  touchscreen + session restoration per GH #125.
+- Backlog (low severity): B7–B9, B11–B15, latent frame-spike items, niri pattern
+  adoptions (Part 3). Best remaining value-for-effort: **B9** (idle-screen
+  screenshot stall — an actual user-facing bug, not just perf) and the
+  **min_zoom-per-pinch** half of B14 (cheap). B8 is VRAM-hygiene cleanup; B7 is
+  gigapixel-TIFF-only. Backlog line numbers predate the perf push — re-verify on
+  pickup.
 
 ## Part 1 — battery / resource leaks
 
-### Next up
+### Perf push (resolved 2026-06-16)
 
-**B1. Every input event marks ALL outputs dirty.**
+**B1. Every input event marks ALL outputs dirty.** ⏭️ **SKIPPED.** Single-monitor
+benefit is marginal — the GPU flip is already empty-damage-skipped (see "Verified
+correct"), so the residual cost is a CPU `compose_frame` pass plus an
+estimated-vblank tail on *other* outputs, and it only fires while the user is
+actively interacting, never at idle. Against that sits the highest regression
+risk of the set: nothing in the input/grab/gesture/action paths marks dirty on
+its own — they *all* rely on this one blanket mark. Revisit only if multi-monitor
+CPU-during-input shows up in a profile.
 `src/input/mod.rs:109` — first line of `process_input_event` is
 `self.mark_all_dirty()`, unconditionally, for every event type. Each dirty
 output runs the full `compose_frame` element build before damage detection;
@@ -35,7 +51,11 @@ mark only the output under the cursor; keyboard → mark nothing eagerly (the
 client commit triggers the precise path); keep `mark_all_dirty` only for
 events that genuinely change global state.
 
-**B2. Canvas-layer widgets bypass all three visibility filters.**
+**B2. Canvas-layer widgets bypass all three visibility filters.** ✅ **DONE
+(`1a9fe99`).** Shipped parts (2) the `mark_dirty_for_surface` canvas-layer branch
+and (3) the `visible_rect` cull in `build_canvas_layer_elements`; part (1)
+frame-callback throttle was already in place. xdg-popup *children* of a canvas
+widget still fall through to `mark_all_dirty` (rare — possible follow-up).
 Windows are culled correctly everywhere; canvas-positioned layer-shell
 widgets miss every filter: (1) frame callbacks sent unconditionally
 (`src/render/lifecycle.rs:248-255`, no `visible_rect` test — contrast windows
@@ -47,7 +67,10 @@ animated widget parked off-viewport renders at full FPS forever and
 re-composes every output at its commit rate. Fix: apply the same
 `visible_rect.overlaps(bbox)` test in all three places.
 
-**B3. Winit backend: free-running 60 fps loop, unconditional swap.**
+**B3. Winit backend: free-running 60 fps loop, unconditional swap.** ✅ **DONE
+(`721232e`).** Took the cheap fix — skip `submit` on empty damage, pass damage
+rects otherwise (niri pattern). The full `redraws_needed` port and the timer
+re-arm note below remain unaddressed (dev-only backend; not worth it).
 `src/backend/winit.rs:127` + `:299` — 16 ms timer re-armed unconditionally;
 every tick runs the full pipeline even with zero clients and zero damage.
 Smithay skips the GPU draw on empty damage but the result is discarded and
@@ -61,7 +84,10 @@ the tick's work (real period ≈ 17-20 ms beating against host vsync), so a
 fixed-cadence deadline or host-frame-callback-driven rendering would also fix
 nested stutter.
 
-**B4. Animated shader background dirties fully-covered outputs.**
+**B4. Animated shader background dirties fully-covered outputs.** ✅ **DONE
+(`b5e1cd6`).** Shipped the fullscreen-output skip (animated bg marks only
+non-fullscreen active outputs). The "fully covered by opaque windows" extension
+was left out to keep it minimal.
 `src/backend/udev.rs:246-253` — `background_is_animated` triggers
 `mark_all_dirty()` every cycle regardless of visibility. Fullscreen outputs
 skip the background entirely (`src/render/mod.rs:537-541`) yet still get
@@ -101,27 +127,38 @@ position, behind-element commits).
 
 ### Backlog (low severity)
 
-- **B6** `src/state/persistence.rs:94` — `write_state_file_if_dirty` builds
-  the full `window_inventory()` (Vec + string clones under `with_states`
-  locks) *before* the dirty/throttle checks; runs per output per rendered
-  frame. Check the cheap epsilons and the 100 ms throttle first.
+- **B6** ✅ **DONE (`9843984`).** `write_state_file_if_dirty` built the full
+  `window_inventory()` (Vec + string clones under `with_states` locks) *before*
+  the dirty/throttle checks, per rendered frame. Fix: moved the 100 ms throttle
+  to the top so sub-throttle calls (frequent during pans/drags) return before
+  building the inventory. (`src/state/persistence.rs`.)
 - **B7** Tile decoder pool: no cancellation of stale in-flight decodes;
   decoded blobs upload regardless of visibility and back up in the channel
   during fast pans (`src/render/tile_worker.rs:43-51`,
   `tile_chunks.rs:340-400`). Skip requests no longer wanted; drop off-viewport
-  responses; bound the queue.
+  responses; bound the queue. → **Verdict: defer** — gigapixel-TIFF-wallpaper
+  path only, and the most involved of the tail.
 - **B8** Screencopy/capture offscreen textures (~33 MB at 4K, up to 2/output)
   retained after the capture client disconnects (`src/render/capture.rs:11-28`);
   freed only on output disconnect. Drop when the protocol queue empties.
+  → **Verdict: nice cleanup** — a real VRAM leak, but hygiene not battery;
+  low-moderate effort.
 - **B9** `pending_screencopies`/`pending_captures` stranded on output
   removal/DPMS-off (`src/state/mod.rs:430,438`) — buffer fds + dead `Output`
   retained, client never gets `failed()`. `retain()` on output removal.
   Related latency bug: `ScreencopyHandler::frame` queues without marking the
   output dirty (`src/handlers/mod.rs:682-685`) — an idle-system `grim` capture
-  stalls until unrelated damage. Needs a dirty-mark kick.
-- **B10** Config watcher polls mtime every 500 ms forever (`src/main.rs:227-256`)
-  — the only periodic wakeup at deep idle. inotify on the config dir, or
-  stretch the interval.
+  stalls until unrelated damage. Needs a dirty-mark kick. → **Verdict: do it** —
+  the latency half is an actual user-facing bug (idle-screen screenshot stall),
+  not just perf; best value-for-effort remaining.
+- **B10** ✅ **DONE (`d685dcc`).** Was: config watcher polled mtime every 500 ms
+  forever — the only discretionary periodic wakeup at deep idle. Fix: an inotify
+  watch on the config *directory* (survives editor atomic-saves), wired into
+  calloop via a `Generic` over a dup'd fd (no `unsafe`; symlink-resolved path).
+  Caveat: a 1 Hz frame-callback heartbeat (#141) remains by design, and a
+  per-second status bar dwarfs the old poll anyway — so the measurable battery
+  delta is small; the real wins are instant hot-reload (no poll latency) and
+  removing the last compositor-side polling loop. (`src/main.rs`.)
 - **B11** Momentum auto-launch timer removed + re-inserted per gesture event
   (`src/state/animation.rs:175-190`, ~140-1000 Hz during pans). Keep one
   timer and reschedule.
@@ -135,6 +172,9 @@ position, behind-element commits).
   repeated `with_states` locks per event (`src/input/mod.rs:193-242`,
   `:741-812`); `min_zoom()` (full window scan) recomputed per pinch-update
   event (`src/input/gestures/pinch.rs:106`) — compute at gesture begin.
+  → **Verdict: do the `min_zoom` half** — cheap + clean (cache it in the
+  `PinchZoom` gesture state at begin). The 6-scan consolidation is moderate and
+  only scales with window count; defer.
 - **B15** Exec loading cursor marks all outputs dirty at refresh rate for up
   to 5 s per launch (`src/input/actions.rs:49-51`). Mark only the cursor's
   output.
@@ -175,7 +215,7 @@ position, behind-element commits).
 - **Per-output precise dirty marking** for surface commits
   (`state/mod.rs:793-863`); commits between vblanks coalesce.
 - **Decoder pool** parks on a condvar; **font warmup** is one-shot;
-  **persistence write** debounced + atomic (modulo B6); **SSD title bars /
+  **persistence write** debounced + atomic; **SSD title bars /
   error bar / shadow / border** caches change-gated with correct teardown on
   normal and crash paths; **chunk caches** have unified LRU eviction with
   correct VRAM accounting.
@@ -228,7 +268,7 @@ redraw gating, empty-damage skip + estimated-vblank pacing, callback
 throttling, DPMS/VT shutdown, gesture coalescing). Still worth stealing:
 
 1. **Winit: skip submit on empty damage** (`niri/src/backend/winit.rs:257-283`)
-   — direct fix for B3.
+   — ✅ adopted as the B3 fix (`721232e`).
 2. **~1 Hz fallback callbacks for invisible surfaces** (`niri/src/niri.rs:193`,
    `:5118-5185`) — driftwm's 0 FPS throttle is better for battery but means an
    off-viewport client waiting on a callback stalls completely until panned
