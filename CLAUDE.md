@@ -4,11 +4,11 @@
 
 driftwm — a trackpad-first infinite canvas Wayland compositor written in Rust. Windows float on an unbounded 2D plane navigated via trackpad gestures (pan, zoom, pinch). No workspaces, no tiling. Built on [smithay](https://github.com/Smithay/smithay).
 
-Actively developed and released (currently v0.8.x) — a public, multi-contributor project, so match existing conventions carefully. See `dev/docs/CAVEATS.md` for architectural pitfalls.
+Actively developed and released (currently v0.11.x) — a public, multi-contributor project, so match existing conventions carefully. See `dev/docs/CAVEATS.md` for architectural pitfalls.
 
 ## Conventions
 
-- Documentation splits by audience: user-facing docs (shaders, window rules) live in `docs/`; internal dev/architecture notes and profiling tooling live in `dev/docs/` and `dev/scripts/`. `README.md` stays at the repo root.
+- Documentation splits by audience: user-facing docs (shaders, window rules, IPC, gigapixel wallpapers) live in `docs/`; internal dev/architecture notes and profiling tooling live in `dev/docs/` and `dev/scripts/`. `README.md` stays at the repo root.
 - Config path: `~/.config/driftwm/config.toml` (respects `XDG_CONFIG_HOME`).
 
 ## Code Style
@@ -65,7 +65,7 @@ Current source layout:
 - `canvas.rs` — coordinate transforms (ScreenPos/CanvasPos), camera math, cone search, zoom helpers (zoom_to_fit, zoom_anchor_camera, snap_zoom, dynamic_min_zoom)
 - `decorations.rs` — per-window SSD state, CPU-rendered title bar, hit-testing helpers
 - `text.rs` — SSD title-bar text: shaping/measurement/tail-ellipsis truncation + cosmic-text rasterization onto a CPU buffer (shared FontSystem warmed off-thread)
-- `render/` — `mod.rs` (compose_frame, post_render, OutputRenderElements), `elements.rs` (tile/cursor/layer rendering helpers), `layers.rs`, `cursor.rs`, `blur.rs` (blur pipeline helpers), `capture.rs` (screencopy/capture helpers), `background.rs`, `error_bar.rs` (bottom-edge error-bar render element — internal chrome, input passes through), `lifecycle.rs`, `shaders.rs`, `shader_chunks.rs` (GPU-bakes static `u_camera`-only shaders into canvas-aligned texture chunks so panning samples cached textures), `tile_chunks.rs`/`tile_chunks_tiff.rs`/`tile_worker.rs` (gigapixel wallpaper: pyramidal-TIFF LOD source, on-demand chunk decode/upload, off-thread decoder pool)
+- `render/` — `mod.rs` (compose_frame, post_render, OutputRenderElements), `elements.rs` (tile/cursor/layer rendering helpers), `layers.rs`, `cursor.rs`, `blur.rs` (blur pipeline helpers), `capture.rs` (screencopy/capture helpers), `screenshot.rs` (off-screen canvas→PNG for `driftwm msg screenshot`; tiles + stitches captures larger than GPU max texture), `capture_background.rs` (fresh per-tile background for off-screen captures), `background.rs`, `error_bar.rs` (bottom-edge error-bar render element — internal chrome, input passes through), `lifecycle.rs`, `shaders.rs`, `shader_chunks.rs` (GPU-bakes static `u_camera`-only shaders into canvas-aligned texture chunks so panning samples cached textures), `tile_chunks.rs`/`tile_chunks_tiff.rs`/`tile_worker.rs` (gigapixel wallpaper: pyramidal-TIFF LOD source, on-demand chunk decode/upload, off-thread decoder pool)
 - `shaders/` — GLSL shader source files (dot_grid, shadow, blur_down/blur_up/blur_mask, corner_clip, border, tile_bg, chunk_bg, wallpaper_bg)
 - `region.rs` — decompose a `RegionAttributes` (additive/subtractive rects) into a non-overlapping rect list
 - `signals.rs` — graceful shutdown via SIGINT/SIGTERM/SIGHUP
@@ -77,6 +77,7 @@ Current source layout:
 - `grabs/` — `mod.rs`, `move_grab.rs` (MoveSurfaceGrab), `resize_grab.rs` (ResizeSurfaceGrab, ResizeState), `pan_grab.rs` (PanGrab for viewport panning), `navigate_grab.rs` (NavigateGrab for directional window navigation)
 - `handlers/` — `compositor.rs` (commit, resize repositioning, dmabuf, layer commit), `layer_shell.rs` (wlr-layer-shell handler), `xdg_shell.rs` (CSD move/resize, window centering, fullscreen, popup grabs), `background_effect.rs` (background-effect handler), `mod.rs` (seat, data device, output, cursor_shape, foreign toplevel, session lock, xdg-decoration, output management, protocol delegates)
 - `protocols/` — `mod.rs`, `foreign_toplevel.rs` (zwlr-foreign-toplevel-management-v1), `output_management.rs` (zwlr-output-management-v1), `screencopy.rs` (wlr-screencopy), `image_copy_capture.rs` (ext-image-copy-capture-v1), `image_capture_source.rs` (ext-image-capture-source-v1), `gamma_control.rs` (zwlr-gamma-control-unstable-v1), `output_power.rs` (zwlr-output-power-management-v1)
+- `ipc/` — `mod.rs` (compositor-side IPC server on a `$XDG_RUNTIME_DIR` Unix socket; backs `driftwm msg`), `client.rs` (the `driftwm msg` client: connect, send one request, print reply — same binary, never starts a compositor), `protocol.rs` (shared line-delimited-JSON `Request`/`Reply` wire types; debuggable with `socat`)
 
 ## Key Design Decisions
 
