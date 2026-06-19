@@ -1,0 +1,1 @@
+require("auto-sort"):setup()
