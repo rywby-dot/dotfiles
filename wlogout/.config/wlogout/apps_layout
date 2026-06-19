@@ -1,0 +1,86 @@
+{
+    "action" : ""
+    "text" : "EXIT"
+    "keybind" : "e"
+}
+{
+    "action" : "wlogout -l ~/.config/wlogout/links_layout -C ~/.config/wlogout/style_apps.css"
+    "text" : "LINKS"
+    "keybind" : "l"
+}
+{
+    "action" : "wlogout -l ~/.config/wlogout/scripts_layout -C ~/.config/wlogout/style_apps.css"
+    "text" : "SCRIPTS"
+    "keybind" : "s"
+}
+{
+    "action" : "wlogout -l ~/.config/wlogout/chromium_layout -C ~/.config/wlogout/style_apps.css"
+    "text" : "CHROMIUM"
+    "keybind" : "c"
+}
+{
+    "action" : "kdenlive",
+    "text" : "kdenlive",
+    "keybind" : "k"
+}
+{
+    "action" : "flatpak run com.bambulab.BambuStudio",
+    "text" : "bambustudio",
+    "keybind" : "b"
+}
+{
+    "action" : "nwg-look",
+    "text" : "Nwg-look",
+    "keybind" : "N"
+}
+{
+    "action" : "flatpak run com.valvesoftware.Steam",
+    "text" : "Steam"
+    "keybind" : "S"
+}
+{
+    "action" : "kvantummanager",
+    "text" : "Kvantum Manager",
+    "keybind" : "K"
+}
+{
+    "action" : "flatpak run com.github.libresprite.LibreSprite"
+    "text" : "LibreSprite"
+    "keybind" : "L"
+}
+{
+    "action" : "flatpak run org.onlyoffice.desktopeditors"
+    "text" : "OnlyOffice"
+    "keybind" : "O"
+}
+{
+    "action" : "audacious -t"
+    "text" : "audacious"
+    "keybind" : "a"
+}
+{
+    "action" : "touch ~/.config/driftwm/config.toml"
+    "text" : "reload config"
+    "keybind" : "r"
+}
+{
+    "action" : "qalculate-qt"
+    "text" : "qalculate"
+    "keybind" : "q"
+}
+{
+    "action" : "flatpak run it.mijorus.smile"
+    "text" : "emoJi"
+    "keybind" : "j"
+}
+{
+    "action" : "kitty env QUIET_START=1 zsh -ic 'nvim ~/.config/wlogout/apps_layout; unset QUIET_START'"
+    "text" : ".config"
+    "keybind" : "C"
+}
+{
+    "action" : ""
+    "text" : ""
+    "keybind" : ""
+}
+

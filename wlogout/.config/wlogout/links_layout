@@ -1,0 +1,65 @@
+{
+    "action" : "wlogout -l ~/.config/wlogout/apps_layout -C ~/.config/wlogout/style_apps.css"
+    "text" : "EXIT"
+    "keybind" : "e"
+}
+{
+    "action" : "firefox 'https://claude.ai/new'"
+    "text" : "claude"
+    "keybind" : "c"
+}
+{
+    "action" : "firefox 'chatgpt.com'"
+    "text" : "cHatgpt"
+    "keybind" : "h"
+}
+{
+    "action" : "firefox 'gemini.google.com'"
+    "text" : "gemini"
+    "keybind" : "g"
+}
+{
+    "action" : "firefox 'chat.deepseek.com'"
+    "text" : "deepseek"
+    "keybind" : "d"
+}
+{
+    "action" : "firefox 'tinkercad.com'"
+    "text" : "Tinkercad"
+    "keybind" : "T"
+}
+{
+    "action" : "firefox 'translate.google.com/?sl=auto&tl=ru&op=translate'"
+    "text" : "translator"
+    "keybind" : "t"
+}
+{
+    "action" : "firefox 'youtube.com'"
+    "text" : "youtube"
+    "keybind" : "y"
+}
+{
+    "action" : "firefox 'three-drop.com'"
+    "text" : "3Drop"
+    "keybind" : "3"
+}
+{
+    "action" : "firefox 'formware.co/onlinestlrepair'"
+    "text" : "stlrepair"
+    "keybind" : "s"
+}
+{
+    "action" : "firefox 'flathub.org'"
+    "text" : "flathub"
+    "keybind" : "f"
+}
+{
+    "action" : "firefox 'thingiverse.com'"
+    "text" : "thiniVerse"
+    "keybind" : "v"
+}
+{
+    "action" : "foot env QUIET_START=1 zsh -ic 'nvim ~/.config/wlogout/links_layout; unset QUIET_START'"
+    "text" : ".config"
+    "keybind" : "C"
+}

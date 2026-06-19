@@ -1,0 +1,45 @@
+{
+    "action" : "wlogout -l ~/.config/wlogout/apps_layout -C ~/.config/wlogout/style_apps.css"
+    "text" : "EXIT"
+    "keybind" : "e"
+}
+{
+    "action" : "kitty -1 zsh -c 'cat $XDG_RUNTIME_DIR/driftwm/state; exec zsh'"
+    "text" : "windows"
+    "keybind" : "w"
+}
+{
+    "action" : "kitty -1 env QUIET_START=1 zsh -ic 'nvim ~/.config/driftwm/config.toml; unset QUIET_START'"
+    "text" : "driftwm config"
+    "keybind" : "d"
+}
+{
+    "action" : "ls -dt /home/rywby/Videos/Screen-Record/* | xargs -d '\n' ripdrag -r -x -a -s 64 -H 500 -b -W 420"
+    "text" : "screen-records"
+    "keybind" : "s"
+}
+{
+    "action" : "ls -dt /home/rywby/Pictures/Screenshots/* | xargs -d '\n' ripdrag -r -x -a -s 64 -H 500 -b -W 420"
+    "text" : "sCreenshots"
+    "keybind" : "c"
+}
+{
+    "action" : "hyprpicker -a -l"
+    "text" : "pick-color"
+    "keybind" : "p"
+}
+{
+    "action" : "showmethekey-gtk"
+    "text" : "Showmethekey"
+    "keybind" : "S"
+}
+{
+    "action" : "foot -a foot-ff zsh -c 'fastfetch -c screenfetch.jsonc && sleep 9999'"
+    "text" : "fastfetch"
+    "keybind" : "f"
+}
+{
+    "action" : "kitty -1 env QUIET_START=1 zsh -ic 'nvim ~/.config/wlogout/scripts_layout; unset QUIET_START'"
+    "text" : ".config"
+    "keybind" : "C"
+}

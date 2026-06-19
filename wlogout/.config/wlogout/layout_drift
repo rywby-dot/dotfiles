@@ -1,0 +1,36 @@
+{
+    "label" : "lock",
+    "action" : "~/.config/niri/swaylock.sh",
+    "text" : "Lock (L)",
+    "keybind" : "l"
+}
+{
+    "label" : "hibernate",
+    "action" : "loginctl hibernate",
+    "text" : "Hibernate (H)",
+    "keybind" : "h"
+}
+{
+    "label" : "logout",
+    "action" : "loginctl terminate-user $USER",
+    "text" : "Logout (O)",
+    "keybind" : "o"
+}
+{
+    "label" : "shutdown",
+    "action" : "loginctl poweroff",
+    "text" : "Shutdown (P)",
+    "keybind" : "p"
+}
+{
+    "label" : "suspend",
+    "action" : "~/.config/niri/swaylock-sleep-drift.sh",
+    "text" : "Suspend (S)",
+    "keybind" : "s"
+}
+{
+    "label" : "reboot",
+    "action" : "loginctl reboot",
+    "text" : "Reboot (R)",
+    "keybind" : "r"
+}
