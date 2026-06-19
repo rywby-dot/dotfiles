@@ -1,0 +1,1 @@
+foot zsh -c "nmtui"

@@ -1,0 +1,142 @@
+* {
+  font-size: 18px;
+}
+window#waybar {
+  background-color: rgba(52, 52, 52, 0.85);
+  border-radius: 15px;
+}
+.modules-left, 
+.modules-center, 
+.modules-right {
+  background-color: transparent;
+}
+#waybar {
+  background: transparent;
+}
+.modules-left {
+  padding: 0 12px;
+}
+.modules-right {
+  padding: 0 0px;
+}
+#custom-one:hover,
+#custom-two:hover,
+#custom-three:hover,
+#custom-four:hover,
+#custom-five:hover{
+  background-color: #444444;
+  border: none;
+  transition: 0.2s;
+}
+#custom-one,
+#custom-two,
+#custom-three,
+#custom-four,
+#custom-five{
+  color: #ffffff;
+  padding: 0 5px;
+}
+#pulseaudio,
+#network,
+#backlight,
+#battery,
+#tray,
+#clock,
+#custom-kbd-layout{
+  color: #ffffff;
+  padding: 0 8px;
+}
+#pulseaudio:hover,
+#network:hover,
+#backlight:hover,
+#battery:hover,
+#clock:hover,
+#custom-kbd-layout:hover {
+  background-color: #444444;
+  border: none;
+  transition: 0.2s;
+}
+#custom-appid,
+#custom-driftwm-edp {
+  color: #cccccc;
+  padding: 0 14px;
+  margin: 0 0px;
+  font-size: 14px;
+}
+#custom-appid:hover,
+#custom-driftwm-edp:hover {
+  background-color: #444444;
+  color: #cccccc;
+  border: none;
+  font-size: 14px;
+  transition: 0.2s;
+}
+#custom-kbd-layout {
+  color: #ff7e2b;
+  font-weight: 900;
+  font-size: 16px;
+}
+#taskbar button:hover {
+  background: #444444;
+  background-image: linear-gradient(#40cc40, #40cc40);
+  background-repeat: no-repeat;
+  background-size: 3px 2px; 
+  background-position: center bottom; 
+  padding-bottom: 0px;
+  background-position: center calc(100% - 3px);
+  transition: 0.2s;
+}
+#taskbar button:hover.active {
+  background: #444444;
+  background-image: linear-gradient(#ff7e3b, #ff7e3b);
+  background-repeat: no-repeat;
+  background-size: 10px 3px; 
+  background-position: center bottom; 
+  padding-bottom: 0px;
+  background-position: center calc(100% - 3px);
+  background-color: #666666;
+
+}
+#taskbar button.active {
+  background-image: linear-gradient(#ff7e2b, #ff7e2b);
+  background-repeat: no-repeat;
+  background-size: 10px 3px; 
+  background-position: center bottom; 
+  padding-bottom: 0px;
+  background-position: center calc(100% - 1px);
+  transition: 0.2s;
+  background-color: #555555
+}
+#taskbar button{
+  color: #ffffff;
+  background-color: transparent;
+  font-size: 10px;
+  padding: 0 5px;
+  margin: 0 0px;
+  border: none;
+  background-image: linear-gradient(#40cc40, #40cc40);
+  background-repeat: no-repeat;
+  background-size: 3px 2px; 
+  background-position: center bottom; 
+  padding-bottom: 0px;
+  background-position: center calc(100% - 1px);
+  transition: 0.2s;
+}
+
+#pulseaudio.muted {
+    background-color: rgba(200, 50, 50, 0.5);
+    color: #ffffff;
+}
+
+
+#custom-real:hover{
+  background-color: #444444;
+  border: none;
+  transition: 0.2s;
+}
+#custom-real{
+  color: #ffffff;
+  padding: 0 5px;
+  font-weight: 900;
+}
+

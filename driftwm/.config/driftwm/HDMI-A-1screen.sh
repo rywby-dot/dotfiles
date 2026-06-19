@@ -1,0 +1,1 @@
+f="$HOME/Pictures/Screenshots/ScreenShot-$(date +'%Y-%m-%d_%H-%M-%S').png" && grim -c -o HDMI-A-1 - | tee "$f" | wl-copy && notify-send "HDMI-A-1 Screenshot" "saved to ~/Pictures/Screenshots/" -i "$f"
