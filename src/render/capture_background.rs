@@ -229,7 +229,11 @@ fn image_tile_bg(
     renderer: &mut GlesRenderer,
     path: &str,
 ) -> Option<CaptureBackground> {
-    let shader = state.render.tile_shader.clone()?;
+    let shader = if state.config.background.mirror_tile {
+        state.render.tile_mirror_shader.clone()?
+    } else {
+        state.render.tile_shader.clone()?
+    };
     let (texture, w, h) = load_texture(renderer, path)?;
     Some(CaptureBackground::Tile {
         shader,

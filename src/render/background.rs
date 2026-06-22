@@ -10,7 +10,8 @@ use driftwm::config::BackgroundKind;
 
 use super::elements::{OutputRenderElements, TileShaderElement};
 use super::shaders::{
-    BG_UNIFORMS, compile_textured_bg_shader, compile_tile_bg_shader, compile_wallpaper_bg_shader,
+    BG_UNIFORMS, compile_textured_bg_shader, compile_tile_bg_mirror_shader, compile_tile_bg_shader,
+    compile_wallpaper_bg_shader,
 };
 
 /// The per-output canvas background, one variant per background mode. Owns its
@@ -492,14 +493,17 @@ fn try_init_texture_bg(
 
     let (texture, w, h, has_transparency) = load_image_to_texture(renderer, path)?;
 
-    let shader_slot = match mode {
-        TextureBgMode::Tile => &mut state.render.tile_shader,
-        TextureBgMode::Wallpaper => &mut state.render.wallpaper_shader,
+    let mirror = matches!(mode, TextureBgMode::Tile) && state.config.background.mirror_tile;
+    let shader_slot = match (mode, mirror) {
+        (TextureBgMode::Tile, false) => &mut state.render.tile_shader,
+        (TextureBgMode::Tile, true) => &mut state.render.tile_mirror_shader,
+        (TextureBgMode::Wallpaper, _) => &mut state.render.wallpaper_shader,
     };
     if shader_slot.is_none() {
-        *shader_slot = match mode {
-            TextureBgMode::Tile => compile_tile_bg_shader(renderer),
-            TextureBgMode::Wallpaper => compile_wallpaper_bg_shader(renderer),
+        *shader_slot = match (mode, mirror) {
+            (TextureBgMode::Tile, false) => compile_tile_bg_shader(renderer),
+            (TextureBgMode::Tile, true) => compile_tile_bg_mirror_shader(renderer),
+            (TextureBgMode::Wallpaper, _) => compile_wallpaper_bg_shader(renderer),
         };
     }
     let Some(shader) = shader_slot.clone() else {

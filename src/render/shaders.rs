@@ -501,6 +501,20 @@ pub(super) fn compile_tile_bg_shader(renderer: &mut GlesRenderer) -> Option<Gles
     }
 }
 
+/// Mirror-tiling variant of [`compile_tile_bg_shader`] that folds seams into
+/// reflections. A separate program (not a uniform) keeps the wrap mode off the
+/// plain tile program shared with the gigapixel-TIFF fallback plane.
+pub(super) fn compile_tile_bg_mirror_shader(renderer: &mut GlesRenderer) -> Option<GlesTexProgram> {
+    let src = format!("#define MIRROR\n{TILE_BG_SRC}");
+    match renderer.compile_custom_texture_shader(&src, TILE_BG_UNIFORMS) {
+        Ok(shader) => Some(shader),
+        Err(e) => {
+            tracing::error!("Failed to compile mirror tile background shader: {e}");
+            None
+        }
+    }
+}
+
 const WALLPAPER_BG_SRC: &str = include_str!("../shaders/wallpaper_bg.glsl");
 
 pub(super) fn compile_wallpaper_bg_shader(renderer: &mut GlesRenderer) -> Option<GlesTexProgram> {

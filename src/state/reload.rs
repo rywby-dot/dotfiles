@@ -91,6 +91,7 @@ impl DriftWm {
         self.render.background_uses_zoom = false;
         self.render.cached_bg.clear();
         self.render.tile_shader = None;
+        self.render.tile_mirror_shader = None;
         self.render.wallpaper_shader = None;
         self.render.chunk_bg_shader = None;
         self.render.cached_tile_chunks.clear();

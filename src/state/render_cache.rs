@@ -39,6 +39,8 @@ pub struct RenderCache {
     pub cached_bg: HashMap<String, crate::render::BackgroundElement>,
     pub capture_state: HashMap<String, CaptureOutputState>,
     pub tile_shader: Option<GlesTexProgram>,
+    /// Tile shader compiled with `MIRROR` — used when `[background] mirror_tile`.
+    pub tile_mirror_shader: Option<GlesTexProgram>,
     pub wallpaper_shader: Option<GlesTexProgram>,
     pub cached_error_bar: HashMap<String, crate::render::ErrorBarCache>,
     /// Pass-through fragment shader cloned into each `BgChunkCache`.
@@ -70,6 +72,7 @@ impl RenderCache {
             cached_bg: HashMap::new(),
             capture_state: HashMap::new(),
             tile_shader: None,
+            tile_mirror_shader: None,
             wallpaper_shader: None,
             cached_error_bar: HashMap::new(),
             chunk_bg_shader: None,

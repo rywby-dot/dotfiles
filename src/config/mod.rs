@@ -451,6 +451,7 @@ impl Config {
         }
 
         let background = BackgroundConfig {
+            mirror_tile: raw.background.mirror_tile.unwrap_or(false),
             cache_shader: raw.background.cache_shader.unwrap_or(false),
             transparent_shader: raw.background.transparent_shader.unwrap_or(false),
             cache_budget_mb: raw.background.cache_budget_mb.unwrap_or(128),
@@ -907,6 +908,7 @@ fn resolve_background_kind(
         kind,
         path,
         texture,
+        mirror_tile: _,
         cache_shader: _,
         transparent_shader: _,
         cache_budget_mb: _,

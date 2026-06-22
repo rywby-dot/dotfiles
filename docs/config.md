@@ -499,6 +499,12 @@ path = "/usr/local/share/driftwm/wallpapers/textured/ripple.glsl"
 texture = "~/Pictures/Wallpapers/photo.jpg"
 ```
 
+### `mirror_tile`
+
+Default: `false`
+
+tile mode only: mirror-fold the image (2×2 reflected block) so a non-seamless image's edges always meet a reflection — no visible tile seams. Also gives a kaleidoscope/symmetry look. No-op for other background types. Single images only; gigapixel pyramidal TIFFs aren't mirrored (pre-mirror the source).
+
 ### `cache_shader`
 
 Default: `false`

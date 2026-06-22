@@ -963,6 +963,9 @@ pub enum BackgroundKind {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct BackgroundConfig {
     pub kind: BackgroundKind,
+    /// Mirror-fold a `Tile` image so non-seamless edges meet a reflection,
+    /// hiding tile seams. No-op for non-tile backgrounds.
+    pub mirror_tile: bool,
     /// Bake a static `u_camera`-only shader to chunked GPU textures and pan
     /// those, instead of recomputing the fragment shader every frame. No-op for
     /// non-shader backgrounds and for shaders using `u_time`/`u_zoom`.
