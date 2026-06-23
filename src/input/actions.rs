@@ -418,30 +418,11 @@ impl DriftWm {
                 }
             }
             Action::SendCursorToOutput(dir) => {
-                let pointer = self.seat.get_pointer().unwrap();
-                let pos = pointer.current_location();
-
-                // Find which output the cursor is currently over by checking
-                // each output's visible canvas rect. Mirrors output_for_window
-                // but for the cursor's canvas-space position.
-                let from_output = self
-                    .space
-                    .outputs()
-                    .find(|o| {
-                        let os = crate::state::output_state(o);
-                        let size = crate::state::output_logical_size(o);
-                        let visible = driftwm::canvas::visible_canvas_rect(
-                            os.camera.to_i32_round(),
-                            size,
-                            os.zoom,
-                        );
-                        drop(os);
-                        visible.contains(Point::<i32, Logical>::from((pos.x as i32, pos.y as i32)))
-                    })
-                    .cloned()
-                    .or_else(|| self.active_output());
-
-                let Some(from_output) = from_output else { return };
+                // The cursor's output (active_output), not keyboard focus or
+                // focus_follows_mouse: absolute devices stay pinned to it.
+                let Some(from_output) = self.active_output() else {
+                    return;
+                };
                 let Some(target_output) = self.output_in_direction(&from_output, dir) else {
                     return;
                 };
@@ -461,9 +442,9 @@ impl DriftWm {
                 ));
 
                 self.warp_pointer(target_canvas);
-                // Match what input/mod.rs:675 does on real cursor moves so the
-                // next action (center-nearest, focus, etc.) targets the new
-                // output even though no real motion event happened.
+                // Match what the pointer-motion handler does on real cursor
+                // moves so the next action (center-nearest, focus, etc.) targets
+                // the new output even though no real motion event happened.
                 self.focused_output = Some(target_output);
             }
             Action::SwitchLayout(target) => {

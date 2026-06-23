@@ -561,6 +561,7 @@ Actions:
 - `toggle-cursor-pan` — toggle cursor edge-pan (see [navigation.edge_pan])
 - `quit` — exit the compositor
 - `send-to-output <dir>` — move focused window to adjacent output
+- `send-cursor-to-output <dir>` — move the cursor to adjacent output
 - `switch-layout <target>` — cycle keyboard layout: next, prev, or a 0-based index
 - `none` — unbind this key combo
 
