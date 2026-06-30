@@ -5,3 +5,4 @@
 -- vim.keymap.set({ "i", "c", "t" }, "jk", "<Esc>", { desc = "jk exit" })
 vim.keymap.set({ "i", "c", "t", "v" }, "<C-c>", "<Esc>")
 vim.keymap.set({ "n" }, "<C-c>", "<cmd>nohlsearch<CR>")
+vim.keymap.set({"n", "v"}, "q", "<cmd>q<cr>", { desc = "Quit" })

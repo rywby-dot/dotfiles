@@ -95,11 +95,11 @@ source $ZSH/oh-my-zsh.sh
 export LANG=en_US.UTF-8
 
 # Preferred editor for local and remote sessions
-if [[ -n $SSH_CONNECTION ]]; then
-  export EDITOR='vim'
-else
-  export EDITOR='nvim'
-fi
+# if [[ -n $SSH_CONNECTION ]]; then
+#   export EDITOR='vim'
+# else
+#   export EDITOR='nvim'
+# fi
 export EDITOR="nvim"
 export VISUAL="nvim"
 # Compilation flags
@@ -135,7 +135,7 @@ setbat() {
     if [ -n "$1" ]; then
         echo "$1" | sudo tee /sys/class/power_supply/BAT0/charge_control_end_threshold
     else
-        echo "Текущий лимит: $(cat /sys/class/power_supply/BAT0/charge_control_end_threshold)%"
+        echo "Current limit: $(cat /sys/class/power_supply/BAT0/charge_control_end_threshold)%"
     fi
 }
 yt() {
@@ -146,13 +146,17 @@ yt() {
 vi() {
         nvim "$HOME/.config/$1"
 }
-cmdc() {
+chc() {
         chmod +x "$HOME/.config/$1"
 }
+mcd() { command mkdir -p "$1" && cd "$1" || return; }
 
+
+alias ci='clear'
+alias hi='history'
 alias ins='sudo xbps-install '
 alias rem='sudo xbps-remove -Ro '
-# alias swa='nvim ~/.config/sway/config'
+alias swa='nvim ~/.config/sway/config'
 alias sea='xbps-query -Rs '
 alias ff='clear && fastfetch -c screenfetch.jsonc'
 alias mnd='mkdir -p '
@@ -164,6 +168,7 @@ alias swao='dbus-run-session sway'
 alias niro='dbus-run-session niri --session'
 ###duyf on colemak-dh
 alias diof='exec dbus-run-session driftwm'
+alias heve='exec dbus-run-session swc-launch hevel'
 alias dio='nvim ~/.config/driftwm/config.toml'
 alias fre="flatpak remove"
 alias fru="flatpak run"

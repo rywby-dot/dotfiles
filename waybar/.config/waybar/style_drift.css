@@ -17,7 +17,7 @@ window#waybar {
   padding: 0 12px;
 }
 .modules-right {
-  padding: 0 0px;
+  padding: 0 12px;
 }
 #custom-one:hover,
 #custom-two:hover,

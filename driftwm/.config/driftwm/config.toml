@@ -45,7 +45,7 @@ autostart = [
   "wl-paste --watch cliphist store",
   "wl-paste --type image --watch cliphist store",
   "mako -c /home/rywby/.config/mako/config_drift",
-  # "AyuGram -startintray",
+  "AyuGram -startintray",
   "kbuildsycoca6",
   "swayosd-server",
   # "xwayland-satellite",
@@ -53,6 +53,7 @@ autostart = [
   # "/home/rywby/.config/driftwm/kbd-layout-monitor.py",
   "sleep 3 && wpctl set-volume @DEFAULT_AUDIO_SINK@ 0%",
   "sleep 3 && /home/rywby/.config/driftwm/clip-notify.sh",
+  "~/ytbot/bot.py",
 ]
 
 # Running driftwm as a systemd session (via driftwm-session / a display manager)
@@ -84,7 +85,7 @@ ELECTRON_OZONE_PLATFORM_HINT = "auto"
 
 [input.keyboard]
 layout = "us,hr,ru"                           # XKB layout (e.g., "us,ru" for multi-layout)
-variant = "colemak_dh,us,"                    # XKB variant (e.g., "dvorak", or "," for two defaults)
+variant = "colemak_dh,,"                    # XKB variant (e.g., "dvorak", or "," for two defaults)
 options = "grp:win_space_toggle"               # XKB options (e.g., "grp:win_space_toggle" for Super+Space layout switch)
 remember_layout_per_window = true  # for multi-layout setups
 model = "pc104"                 # XKB model (e.g., "pc105")
@@ -117,34 +118,38 @@ inactive_opacity = 0.4             # cursor opacity on non-active outputs (0.0�
 trackpad_speed = 5.0        # trackpad (scroll/gestures) pan multiplier
 mouse_speed = 3.0           # mouse (drag) pan multiplier (1.0 = direct)
 drift = 0.1               # momentum coast: 0 = off, 0.5 = default, 1 = floatiest
-animation_speed = 0.3       # camera lerp factor (higher = faster)
+animation_speed = 0.2       # camera lerp factor (higher = faster)
 auto_navigate_on_close = true  # on close, pan to the newly focused window if off-screen
                             # false = camera stays put; focus only moves to a visible window
 nudge_step = 100             # px per nudge-window action (mod-shift-arrow by default)
-pan_step = 120.0            # px per pan-viewport action (mod-ctrl-arrow by default)
-# Anchors: canvas points discoverable by center-nearest (4-finger swipe / Mod+Arrow)
+pan_step = 100.0            # px per pan-viewport action (mod-ctrl-arrow by default)
+# Anchors: canvas points discoverable by cedriftwm msg actionnter-nearest (4-finger swipe / Mod+Arrow)
 # even when no window is there. Uses Y-up coordinate system.
-# anchors = [[0, 0]]
+anchors = [[-3000, 1]]
 # Example with 4 corners:
 # # anchors = [[0, 0], [-1750, 1750], [1750, 1750], [1750, -1750], [-1750, -1750]]
 
 [navigation.edge_pan]
 zone = 200.0                  # activation zone width (px from viewport edge)
-speed_min = 4.0               # px/frame at zone boundary
-speed_max = 10.0              # px/frame at viewport edge
+speed_min = 1.0               # px/frame at zone boundary
+speed_max = 8.0              # px/frame at viewport edge
 cursor_pan = false            # pan when the bare cursor touches a screen edge
-#                             # (not just while dragging). Toggle: "toggle-cursor-pan".
+                             # (not just while dragging). Toggle: "toggle-cursor-pan".
 cursor_zone = 0               # cursor edge-pan activation zone (px) — kept small
-#                             # so it doesn't trigger by accident.
-#                             # Pans at a constant speed_max within the zone (steady,
-#                             # push-speed independent); speed_min is unused here.
+                              # so it doesn't trigger by accident.
+                              # Pans at a constant speed_max within the zone (steady,
+                              # push-speed independent); speed_min is unused here.
+# latency_ms = 100              # delay before pan starts once cursor enters the
+                              # activation zone (ms). Helps avoid accidental pan
+                              # when crossing between monitors during a window
+                              # drag. 0 disables.
 
 [zoom]
 step = 1.5                  # multiplier per keypress (1.1 = 10% per press)
 fit_padding = 80.0          # viewport px padding for zoom-to-fit (screen space)
-reset_on_new_window = false # animate zoom to 1.0 when a new window is mapped
+reset_on_new_window = true # animate zoom to 1.0 when a new window is mapped
                             # (false = keep current zoom, pan only)
-reset_on_activation = false # animate zoom to 1.0 when an off-screen window
+reset_on_activation = true # animate zoom to 1.0 when an off-screen window
                             # requests focus
                             # (false = keep current zoom, pan only)
 
@@ -153,8 +158,8 @@ enabled = true               # magnetic edge snapping during window drag
 gap = 12.0                   # gap between snapped windows (canvas px)
 distance = 24.0              # activation threshold (screen px from edge)
 break_force = 32.0           # screen px past snap to break free
-same_edge = true            # also snap same edges (left-to-left, top-to-top)
-edge_center = true          # also snap edge midpoints (centers align along the moved axis)
+corners = true            # also snap same edges (left-to-left, top-to-top)
+centers = true          # also snap edge midpoints (centers align along the moved axis)
 
 [decorations]
 bg_color = "#212021"           # title bar background (default: dark gray)
@@ -230,20 +235,23 @@ opacity = 0.8               # 0.0–1.0
 
 [background]
 # Three background types: "shader", "tile", "wallpaper". `path` is the source.
-# type = "shader"                                  
-# path = "~/driftwm/extras/wallpapers/textured/ripple.glsl"
-# texture = "~/Downloads/4kart.jpg"
+type = "shader"
+path = "~/.config/driftwm/paralax_mirror.glsl"
+texture = "~/Downloads/4kart.jpg"
+mirror_tile = true
 
-# type = "wallpaper"
-# path = "/home/rywby/Downloads/4kart.jpg"
+# type = "tile"
+# path = "~/Downloads/4kart.jpg"
+# type = "shader"
+# path = "/home/rywby/Downloads/627527-4268019718.png"
 # type = "tile"
 # path = "~/Downloads/world.topo.bathy.200408.3x21600x10800_geo_fixed.tif"
 # type = "tile"
-path = "~/Downloads/map_of_paris.tif"
-type = "tile"
-# path = "~/gigapixel-earth/earth_L10.tif"
+# path = "~/Downloads/map_of_paris.tif"
 # type = "tile"
-# path = "~/Downloads/AyuGram Desktop/custom_shader.glsl"
+# path = "~/gigapixel-earth/earth_L10.tif"
+# type = "shader"
+# path = "~/.config/driftwm/kirpich.glsl"
 # Examples:
 # # type = "shader" — procedural GLSL (scrolls with canvas)
 # # path = "/usr/local/share/driftwm/wallpapers/animated/fast_smoke.glsl"
@@ -347,10 +355,10 @@ cache_budget_mb = 120
 "mod+r" = "spawn wlogout -l ~/.config/wlogout/apps_layout -C ~/.config/wlogout/style_apps.css"
 "mod+shift+r" = "spawn fuzzel"
 "mod+m" = "spawn wlogout -C ~/.config/wlogout/style_apps.css"
-"mod+l" = "exec swaylock"
-"shift+home" = "exec swaylock"
-"f12" = "exec swaylock"
-"home" = "exec swaylock & sleep 1 && loginctl suspend"
+"mod+l" = "exec swaylock -f -c 000000 -kl"
+# "shift+home" = "exec swaylock"
+# "f12" = "exec swaylock"
+"home" = "exec swaylock -f -c 000000 -kl & sleep 1 && loginctl suspend"
 # "mod+alt+shift+j" = "spawn notify-send 'eDP-1' 'Mic' && wl-screenrec -o eDP-1 --codec avc -b 5MB --audio -f ~/Videos/Screen-Record/eDP-1-MIC-$(date +%Y-%m-%d_%H-%M-%S).mp4 && notify-send 'wl-screenrec' 'stop recording'"
 "mod+alt+shift+l" = "spawn notify-send 'gpu-screen-recorder' 'eDP-1 audio+mic' && gpu-screen-recorder -w eDP-1 -k h264 -bm qp -q medium -a alsa_input.pci-0000_03_00.6.HiFi__Mic1__source -o ~/Videos/Screen-Record/eDP-1-$(date +%Y-%m-%d_%H-%M-%S).mp4"
 "mod+alt+shift+u" = "spawn notify-send 'gpu-screen-recorder' 'HDMI-A-1 audio+mic' && gpu-screen-recorder -w HDMI-A-1 -k h264 -bm qp -q medium -a alsa_input.pci-0000_03_00.6.HiFi__Mic1__source -o ~/Videos/Screen-Record/HDMI-A-1-$(date +%Y-%m-%d_%H-%M-%S).mp4"
@@ -358,17 +366,18 @@ cache_budget_mb = 120
 "mod+alt+shift+n" = "spawn pkill -f gpu-screen-recorder & notify-send 'gpu-screen-recorder' 'stop recording'"
 # windows
 "mod+c" = "center-window"
-# "mod+shift+c" = "close-window"
 "mod+shift+q" = "close-window"
+"mod+shift+c" = "focus-center"
 "mod+z" = "focus-center"
-"mod+ctrl+z" = "send-to-output left"
-"mod+ctrl+x" = "send-to-output right"
-"mod+alt+z" = "send-to-output left"
-"mod+alt+x" = "send-to-output right"
-"mod+shift+right" = "nudge-window right"
-"mod+shift+left" = "nudge-window left"
-"mod+shift+up" = "nudge-window up"
-"mod+shift+down" = "nudge-window down"
+"mod+slash" = "focus-center"
+"mod+alt+x" = "spawn driftwm msg action send-to-output left & driftwm msg action send-cursor-to-output left"
+"mod+alt+c" = "spawn driftwm msg action send-to-output right & driftwm msg action send-cursor-to-output right"
+"mod+ctrl+x" = "send-cursor-to-output left"
+"mod+ctrl+c" = "send-cursor-to-output right"
+"mod+shift+right" = "spawn driftwm msg action nudge-window right & driftwm msg action pan-viewport right"
+"mod+shift+left" = "spawn driftwm msg action nudge-window left & driftwm msg action pan-viewport left"
+"mod+shift+up" = "spawn driftwm msg action nudge-window up & driftwm msg action pan-viewport up"
+"mod+shift+down" = "spawn driftwm msg action nudge-window down & driftwm msg action pan-viewport down"
 "mod+tab" = "cycle-windows forward"
 "alt+tab" = "cycle-windows forward"
 "mod+shift+tab" = "cycle-windows backward"
@@ -381,14 +390,16 @@ cache_budget_mb = 120
 "mod+minus" = "zoom-out"
 "mod+s" = "zoom-to-fit-snapped"
 "mod+shift+s" = "zoom-to-fit"
-"mod+shift+z" = "zoom-reset"
+"mod+shift+a" = "zoom-reset"
 "mod+x" = "fit-window-snapped"
 "mod+shift+x" = "fit-window"
-"mod+g" = "toggle-fullscreen"
-"mod+ctrl+right" = "pan-viewport right"
-"mod+ctrl+left" = "pan-viewport left"
-"mod+ctrl+up" = "pan-viewport up"
-"mod+ctrl+down" = "pan-viewport down"
+"mod+p" = "toggle-fullscreen"
+"mod+ctrl+right" = "send-cursor-to-output right"
+"mod+ctrl+left" = "send-cursor-to-output left"
+"mod+alt+right" = "spawn driftwm msg action send-to-output right & driftwm msg action send-cursor-to-output right"
+"mod+alt+left" = "spawn driftwm msg action send-to-output left & driftwm msg action send-cursor-to-output left"
+"mod+ctrl+up" = "none"
+"mod+ctrl+down" = "none"
 "mod+v" = "toggle-pin-to-screen"
 #other
 "mod+q" = "none"
@@ -426,19 +437,24 @@ XF86MonBrightnessDown = "spawn swayosd-client --brightness -10"
 # connected to the focused one via snap adjacency
 
 [mouse]
+# When true (default), dragging a window's edge or corner resizes it via the
+# invisible resize border (SSD frame or CSD margin). Set false to make that
+# border inert — resize only through explicit bindings (e.g. alt+right) or
+# gestures.
+resize_on_border = true
+
 # When true, resizing a window by dragging its edge (SSD or CSD border)
 # propagates to every window connected to it via snap adjacency.
 # Keybinding/gesture resize is unaffected — bind `resize-window-snapped`
 # explicitly if you want cluster-aware resize there too.
-decoration_resize_snapped = true  #i want to TURN THIS SHIT OFF but I 
-                                  #dont know HOW
+decoration_resize_snapped = true 
 
 # When true, maximize/unmaximize initiated via window decoration (CSD maximize
 # button, SSD title-bar double-click, or xdg/foreign-toplevel set_maximized)
 # propagates to every window connected via snap adjacency.
 # Keybinding/gesture fit is unaffected — bind `fit-window-snapped` explicitly
 # if you want cluster-aware fit there too.
-# decoration_fit_snapped = false
+decoration_fit_snapped = true
 
 [mouse.on-window]
 "mod+shift+left" = "move-window"
@@ -468,9 +484,9 @@ decoration_resize_snapped = true  #i want to TURN THIS SHIT OFF but I
 "mod+shift+wheel-scroll" = "zoom"
 "mod+ctrl+shift+wheel-scroll" = "zoom"
 
-"mod+alt+right" = "close-window"
-"mod+alt+left" = "exec kitty -1"
-"mod+alt+middle" = "exec firefox"
+"mod+alt+right" = "zoom-out"
+"mod+alt+left" = "zoom-in"
+"mod+alt+middle" = "zoom-reset"
 
 # Gesture bindings: "Modifier+N-finger-<type>" = "action"
 # Context-aware: on-window, on-canvas, anywhere.
@@ -517,6 +533,8 @@ pinch_out_threshold = 1.15    # scale above which pinch-out fires (1.0 = no pinc
 [gestures.anywhere]
 "3-finger-swipe" = "pan-viewport"         # continuous (per-frame dx/dy)
 "4-finger-swipe" = "center-nearest"       # threshold (accumulate, detect direction, fire once)
+"mod+4-finger-swipe-right" = "send-cursor-to-output left"
+"mod+4-finger-swipe-left" = "send-cursor-to-output right"
 "mod+3-finger-swipe" = "center-nearest"   # mod makes 3-finger swipe navigate too
 # Per-direction overrides examples (threshold only, checked before swipe fallback):
 # # "4-finger-swipe-up" = "exec brightnessctl set +5%"
@@ -556,14 +574,14 @@ name = "eDP-1"           # connector name (required)
 scale = 1.0            # fractional scale (default: 1.0)
 transform = "normal"     # normal, 90, 180, 270, flipped, flipped-90, flipped-180, flipped-270
 position = "auto"        # "auto" (left-to-right) or [x, y] in layout coords
-mode = "preferred"       # "preferred", "1920x1080", or "2560x1440@144"
+mode = "1920x1080@60"       # "preferred", "1920x1080", or "2560x1440@144"
 
 [[outputs]]
 name = "HDMI-A-1"
 scale = 1.0
 transform = "normal"
 position = [-2565, -1000]   #put position on 5px more. it make a nice effect
-mode = "2560x1440@144"
+mode = "preferred"
 
 # Window rules: match windows and apply per-window overrides.
 # ALL matching rules are merged in config order (later rules override earlier
@@ -633,13 +651,19 @@ pinned_to_screen = true
 decoration = "server"
 
 [[window_rules]]
+app_id = "feh"
+size = [1536, 864]
+pinned_to_screen = true
+decoration = "server"
+
+[[window_rules]]
 app_id = "it.mijorus.smile"
 size = [322, 650]
 pinned_to_screen = true
 # decoration = "server"
 
 [[window_rules]]
-app_id = "vertorixVtk"
+app_id = "Vtk"
 # size = [1536, 864]
 pinned_to_screen = true
 decoration = "server"
@@ -685,8 +709,11 @@ app_id = "chromium"
 size = [1664, 936]
 
 [[window_rules]]
-app_id = "AyuGram"
-size = [1664, 936]
+app_id = "com.ayugram.desktop"
+title = "Media viewer"
+pinned_to_screen = true
+size = [1920, 1080]
+decoration = "none"
 
 # [[window_rules]]
 # app_id = "org.kde.dolphin"
@@ -710,6 +737,15 @@ pinned_to_screen = true
 opacity = 0.92
 # border_width = 3
 position = [730, -230]
+
+[[window_rules]]
+app_id = "one.alynx.showmethekey"
+size = [300, 70]
+opacity = 0.85
+pinned_to_screen = true
+widget = true
+border_width = 0
+position = [-750, -450]
 
 [[window_rules]]
 app_id = "/.*logout_dialog.*/"

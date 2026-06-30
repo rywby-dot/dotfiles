@@ -8,7 +8,7 @@ done
 
 print_state() {
   # Достаем layout и сразу заменяем длинные названия на короткие
-  sed -n 's/^layout=//p' "$STATE_FILE" | sed -e 's/Croatian (US)/qwerty/' -e 's/Russian/RU/' -e 's/English (Colemak-DH)/US/'
+  sed -n 's/^layout=//p' "$STATE_FILE" | sed -e 's/Croatian/HR/' -e 's/Russian/RU/' -e 's/English (Colemak-DH)/US/'
 }
 
 # Выводим один раз при запуске Waybar
