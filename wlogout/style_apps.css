@@ -1,0 +1,58 @@
+window {
+    background-color: rgba(0, 0, 0, 0); 
+}
+
+button {
+    all: unset; 
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 20%;
+    border: 0px solid rgba(86, 188, 179, 0.5);
+    background-color: rgba(52, 52, 52, 0.75);
+    color: #ffffff;
+    font-size: 30px;
+    border-radius: 12px;
+    margin: 10 10px;
+}
+
+button:focus,
+button:active {
+    background-color: rgba(52, 52, 52, 0.75);
+    outline: none;
+    border: 0px solid rgba(86, 188, 179, 0.5);
+}
+button:hover {
+  background-color: rgba(62, 62, 62, 0.85);
+  border: 0px solid rgba(86, 188, 179, 0.5);
+}
+
+label {
+    margin-top: 5px;
+}
+
+#BambuStudio {
+    background-image: image(url("/usr/share/icons/hicolor/scalable/apps/bambulab-studio.svg"));
+}
+#lock {
+    background-image: image(url("/usr/share/wlogout/icons/lock.png"), url("/usr/local/share/wlogout/icons/lock.png"));
+}
+
+#logout {
+    background-image: image(url("/usr/share/wlogout/icons/logout.png"), url("/usr/local/share/wlogout/icons/logout.png"));
+}
+
+#suspend {
+    background-image: image(url("/usr/share/wlogout/icons/suspend.png"), url("/usr/local/share/wlogout/icons/suspend.png"));
+}
+
+#hibernate {
+    background-image: image(url("/usr/share/wlogout/icons/hibernate.png"), url("/usr/local/share/wlogout/icons/hibernate.png"));
+}
+
+#shutdown {
+    background-image: image(url("/usr/share/wlogout/icons/shutdown.png"), url("/usr/local/share/wlogout/icons/shutdown.png"));
+}
+
+#reboot {
+    background-image: image(url("/usr/share/wlogout/icons/reboot.png"), url("/usr/local/share/wlogout/icons/reboot.png"));
+}

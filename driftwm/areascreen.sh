@@ -1,0 +1,1 @@
+g="$(slurp)" && [ -n "$g" ] && d="$HOME/Pictures/Screenshots" && mkdir -p "$d" && f="$d/ScreenShot-$(date +'%Y-%m-%d_%H-%M-%S').png" && grim -g "$g" "$f" && wl-copy < "$f" && notify-send "Area Screenshot" "saved to ~/Pictures/Screenshots" -i "$f"

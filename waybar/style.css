@@ -1,0 +1,120 @@
+* {
+  font-size: 15px;
+}
+
+window#waybar {
+  background-color: #222222;
+  color: #ffffff;
+  transition-property: background-color;
+  transition-duration: 0s;
+}
+
+#workspaces button {
+  padding: 0 2px;
+  background-color: transparent;
+  color: #ffffff;
+  font-weight: 400;
+  border-width: 2px;
+  border-radius: 0;
+  border-color: transparent
+}
+#workspaces button.visible {
+  border-color: #5f676a;
+}
+#workspaces button.visible:not(.empty) {
+  border-color: #5f676a;
+  background-color: #204050;
+}
+#workspaces button:not(.focused):not(.empty):not(.visible) {
+  background-color: #285577;
+}
+#workspaces button.focused {
+  border-color: #6ca8c9;
+}
+#workspaces button.focused:not(.empty) {
+  border-color: #6ca8c9;
+  background-color: #285577;
+}
+
+#workspaces button.urgent {
+  background-color: #900000;
+}
+
+
+#workspaces,
+#window,
+#taskbar,
+#mode,
+#scratchpad,
+#language,
+#idle_inhibitor,
+#pulseaudio,
+#network,
+#backlight,
+#battery,
+#tray,
+#clock {
+  padding: 0 6px;
+  color: #ffffff;
+}
+
+#idle_inhibitor.activated {
+  background-color: #900000
+}
+
+#network:not(.wifi):not(.ethernet):not(.linked) {
+  background-color: #900000;
+}
+
+#mode {
+  background-color: #900000;
+  padding: 0 4px;
+}
+.modules-left > widget:first-child > #workspaces {
+  margin-left: 0;
+}
+
+/* If workspaces is the rightmost module, omit right margin */
+.modules-right > widget:last-child > #workspaces {
+  margin-right: 0;
+}
+
+
+/* Using steps() instead of linear as a timing function to limit cpu usage */
+#battery.critical:not(.charging) {
+  background-color: #900000;
+}
+
+#pulseaudio.muted {
+  background-color: #900000;
+}
+
+#tray > .needs-attention {
+  background-color: #900000;
+}
+
+#language.us {
+  color: #dc6400;
+  font-weight: 900;
+  font-size: 18px;
+}
+#language.ru {
+  color: #36aca3;
+  font-weight: 900;
+  font-size: 18px;
+}
+
+#taskbar button.active {
+  background-color: #285577;
+  border-color: #6ca8c9;
+
+}
+#taskbar button{
+  padding: 0 0px;
+  background-color: transparent;
+  color: #ffffff;
+  font-weight: 400;
+  border-width: 2px;
+  border-radius: 0;
+  border-color: transparent
+}

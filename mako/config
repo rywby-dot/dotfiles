@@ -1,0 +1,14 @@
+font=sans-serif 12
+anchor=top-right
+default-timeout=3000
+ignore-timeout=1
+layer=overlay
+background-color=#242424
+text-color=#ffffff
+border-size=2
+border-color=#285577
+border-radius=0
+margin=0
+padding=5
+max-visible=3
+sort=-time

@@ -1,0 +1,524 @@
+seat * remember_layout_per_window enabled
+# Default config for Sway
+#
+# Copy this to ~/.config/sway/config and edit it to your liking.
+#
+# Read `man 5 sway` for a complete reference.
+smart_borders on
+smart_gaps on
+mouse_warping container
+default_border pixel 2
+default_floating_border normal
+workspace_auto_back_and_forth yes
+# titlebar_border_thickness 0
+# titlebar_padding 0 0
+# font monospace 1
+#                       border    background text      indicator child_border
+# client.focused          #285577   #285577    #ffffff   #285577   #285577
+# client.focused_inactive #5f676a   #333333    #888888   #285577   #5f676a
+# client.unfocused        #333333   #222222    #888888   #285577   #222222
+### Output configuration
+#
+# Default wallpaper (more resolutions are available in @datadir@/backgrounds/sway/)
+# output HDMI-A-1 bg ~/Pictures/4kart.jpg fill
+# output eDP-1 bg ~/Pictures/4kart.jpg fill
+#
+# Example configuration:
+#
+output HDMI-A-1 resolution 2560x1440 position -2565,-900
+output eDP-1 resolution 1920x1080 position 0,0
+#
+# You can get the names of your outputs by running: swaymsg -t get_outputs
+
+### Idle configuration
+#
+# Example configuration:
+#
+exec swayidle -w \
+    timeout 900 'swaymsg "input * xkb_switch_layout 0"; swaylock -f -c 000000' \
+    before-sleep 'swaymsg "input * xkb_switch_layout 0"; swaylock -f -c 000000'
+#
+# This will lock your screen after 300 seconds of inactivity, then turn off
+# your displays after another 300 seconds, and turn your screens back on when
+# resumed. It will also lock your screen before your computer goes to sleep.
+
+### Input configuration
+#
+# Keyboard
+input type:keyboard {
+    xkb_layout "us,ru"
+    xkb_variant "colemak_dh,"
+    xkb_options "grp:caps_toggle"
+
+    repeat_delay 220
+    repeat_rate 40
+
+    xkb_numlock disable
+}
+
+# Touchpad
+input type:touchpad {
+    tap enabled
+    dwt enabled
+    drag enabled
+
+    natural_scroll enabled
+
+    pointer_accel 0.5
+    accel_profile adaptive
+
+    scroll_method edge
+    click_method button_areas
+    scroll_factor 0.9
+}
+
+# Mouse / other pointer devices
+input type:pointer {
+    pointer_accel 0.3
+    accel_profile flat
+}
+#
+# You can also configure each device individually.
+# Read `man 5 sway-input` for more information about this section.
+
+### Variables
+#
+# Logo key. Use Mod1 for Alt.
+set $mod Mod4
+set $app ~/.config/sway/focus-window.sh
+
+set $left n
+set $down e
+set $up i
+set $right o
+
+set $term footclient
+
+set $menu waypie
+set $menu2 fuzzel
+
+set $tg flatpak run com.ayugram.desktop
+
+set $browser flatpak run app.zen_browser.zen
+
+set $fm dolphin
+set $tuifm "footclient nu -e 'f'"
+
+set $clip "footclient -a foot-tuicl tuicl"
+
+set $block swaylock -f -c 000000
+
+set $sleep loginctl suspend
+
+set $out wlogout -C ~/.config/wlogout/style_apps.css
+
+set $outputshot f="$HOME/Pictures/Screenshots/ScreenShot-$(date +'%F_%H-%M-%S').png" && o="$(swaymsg -t get_outputs | jq -r '.[] | select(.focused == true) | .name')" && grim -c -o "$o" "$f" && wl-copy <"$f" && notify-send "$o Screenshot" "saved to ~/Pictures/Screenshots/" -i "$f"
+set $selectshot f="$HOME/Pictures/Screenshots/ScreenShot-$(date +'%F_%H-%M-%S').png" && grim -c -g "$(slurp)" "$f" && wl-copy <"$f" && notify-send "Area Screenshot" "saved to ~/Pictures/Screenshots/" -i "$f"
+set $windowshot f="$HOME/Pictures/Screenshots/ScreenShot-$(date +'%F_%H-%M-%S').png" && id="$(swaymsg -t get_tree | jq -r '.. | objects | select(.focused? == true) | .foreign_toplevel_identifier // empty')" && grim -T "$id" "$f" && wl-copy <"$f" && notify-send "Window Screenshot" "saved to ~/Pictures/Screenshots/" -i "$f"
+
+# set $langswitch "sleep 0.2 && ydotool key 29:1 30:1 30:0 29:0 && sleep 0.1 && fleepit -m wayland -l colemak-en-ru && sleep 0.1 && swaymsg 'input * xkb_switch_layout next' && sleep 0.1 && ydotool key 29:1 47:1 47:0 29:0"
+set $langswitch "fleepit -m wayland -l colemak-en-ru && swaymsg 'input * xkb_switch_layout next'"
+set $langswitchsmall sh -c "fleepit -m wayland -l colemak-en-ru; swaymsg 'input * xkb_switch_layout next'; ydotool key 29:1 47:1 47:0 29:0"
+
+set $movefocus ~/.config/sway/swaysome-move-focus.sh
+
+set $ws10 "10:`"
+set $ws11 "11:1"
+set $ws12 "12:2"
+set $ws13 "13:3"
+set $ws14 "14:4"
+set $ws15 "15:5"
+set $ws16 "16:6"
+set $ws17 "17:7"
+set $ws18 "18:8"
+set $ws19 "19:9"
+
+set $ws20 "20:`"
+set $ws21 "21:1"
+set $ws22 "22:2"
+set $ws23 "23:3"
+set $ws24 "24:4"
+set $ws25 "25:5"
+set $ws26 "26:6"
+set $ws27 "27:7"
+set $ws28 "28:8"
+set $ws29 "29:9"
+
+set $notify mako
+
+set $uslang input type:keyboard xkb_switch_layout 0
+
+set $vimium "~/builds/vimouse/wl-kbptr/build/wl-kbptr \
+-o modes=floating,click \
+-o mode_floating.source=detect"
+
+set $dock nwg-dock -d -nolauncher -nows -p bottom -hd 0
+
+    floating_modifier $mod normal
+bindsym --to-code {
+     $mod+S exec $vimium
+     $mod+Return exec $term
+     $mod+a exec $term
+
+     # $mod+f exec $app $browser
+     # $mod+Shift+Return exec $app $browser
+     $mod+Shift+f exec $browser
+
+     $mod+t exec $app $tg
+
+     $mod+d exec $tuifm
+     $mod+Shift+d exec $app $fm
+     $mod+Ctrl+d exec $fm
+
+     $mod+w exec $clip
+
+     $mod+l exec $block
+     Pause exec $sleep
+
+     # $mod+m exec $out
+     $mod+Shift+q kill
+
+     $mod+r exec $menu
+     $mod+Ctrl+r exec $menu2
+
+     Shift+Print exec $outputshot
+     Print exec $selectshot
+     Insert exec $windowshot
+
+     $mod+Ctrl+Shift+a reload
+     $mod+Shift+u reload
+
+#
+# Moving around:
+#
+    # Move your focus around
+     $mod+$left focus left
+     $mod+$down focus down
+     $mod+$up focus up
+     $mod+$right focus right
+    # Or use $mod+[up|down|left|right]
+     $mod+Left focus left
+     $mod+Down focus down
+     $mod+Up focus up
+     $mod+Right focus right
+
+    # Move the focused window with the same, but add Shift
+     $mod+Shift+$left move left
+     $mod+Shift+$down move down
+     $mod+Shift+$up move up
+     $mod+Shift+$right move right
+    # Ditto, with arrow keys
+     $mod+Shift+Left move left
+     $mod+Shift+Down move down
+     $mod+Shift+Up move up
+     $mod+Shift+Right move right
+
+     $mod+Ctrl+$left focus output HDMI-A-1
+     $mod+Ctrl+$right focus output eDP-1
+
+     $mod+Ctrl+Left focus output HDMI-A-1
+     $mod+Ctrl+Right focus output eDP-1
+
+     $mod+Ctrl+x focus output HDMI-A-1
+     $mod+Ctrl+c focus output eDP-1
+
+     $mod+Ctrl+Shift+$left move container to output HDMI-A-1; focus output HDMI-A-1
+     $mod+Ctrl+Shift+$right move container to output eDP-1; focus output eDP-1
+
+     $mod+Ctrl+Shift+Left move container to output HDMI-A-1; focus output HDMI-A-1
+     $mod+Ctrl+Shift+Right move container to output eDP-1; focus output eDP-1
+
+     $mod+Ctrl+Shift+x move container to output HDMI-A-1; focus output HDMI-A-1
+     $mod+Ctrl+Shift+c move container to output eDP-1; focus output eDP-1
+#
+# Switch to workspace
+     $mod+1 exec swaysome focus 1
+     $mod+2 exec swaysome focus 2
+     $mod+3 exec swaysome focus 3
+     $mod+4 exec swaysome focus 4
+     $mod+5 exec swaysome focus 5
+     $mod+6 exec swaysome focus 6
+     $mod+7 exec swaysome focus 7
+     $mod+8 exec swaysome focus 8
+     $mod+9 exec swaysome focus 9
+     $mod+grave exec swaysome focus 0
+
+     $mod+Shift+1 exec $movefocus 1
+     $mod+Shift+2 exec $movefocus 2
+     $mod+Shift+3 exec $movefocus 3
+     $mod+Shift+4 exec $movefocus 4
+     $mod+Shift+5 exec $movefocus 5
+     $mod+Shift+6 exec $movefocus 6
+     $mod+Shift+7 exec $movefocus 7
+     $mod+Shift+8 exec $movefocus 8
+     $mod+Shift+9 exec $movefocus 9
+     $mod+Shift+grave exec $movefocus 0
+
+     $mod+c exec $movefocus focnext
+     $mod+x exec $movefocus focprev
+     $mod+Shift+c exec $movefocus next
+     $mod+Shift+x exec $movefocus prev
+     $mod+Alt+c workspace next_on_output
+     $mod+Alt+x workspace prev_on_output
+     $mod+Shift+Alt+c move container to workspace next_on_output; workspace next_on_output
+     $mod+Shift+Alt+x move container to workspace prev_on_output; workspace prev_on_output
+
+     $mod+f workspace number $ws20
+     $mod+Shift+Return workspace number $ws20
+# Note: workspaces can have any name you want, not just numbers.
+# We just use 1-10 as the default.
+#
+# Layout stuff:
+#
+    # You can "split" the current object of your focus with
+    # $mod+b or $mod+v, for horizontal and vertical splits
+    # respectively.
+     # $mod+g splith
+     # $mod+v splitv
+
+    # Switch the current container between different layout styles
+     # $mod+Shift+a layout stacking
+     $mod+Shift+r layout tabbed
+     $mod+Shift+s layout toggle split
+
+    # Make the current focus fullscreen
+     $mod+p fullscreen
+
+    # Toggle the current focus between tiling and floating mode
+     $mod+v floating toggle
+
+    # Swap focus between the tiling area and the floating area
+     $mod+shift+v focus mode_toggle
+
+    # Move focus to the parent container
+     $mod+Ctrl+s focus parent
+
+     Alt+Tab exec swayr switch-to-urgent-or-lru-window
+     $mod+Tab exec $langswitch
+     $mod+Shift+Tab exec $langswitchsmall
+
+#
+# Scratchpad:
+#
+    # SwayFX has a "scratchpad", which is a bag of holding for windows.
+    # You can send windows there and get them back later.
+
+    # Move the currently focused window to the scratchpad
+     $mod+Shift+minus move scratchpad
+    # Show the next scratchpad window or hide the focused scratchpad window.
+    # If there are multiple scratchpad windows, this command cycles through them.
+     $mod+minus scratchpad show
+
+
+#
+# Utilities:
+#
+ XF86AudioMute exec swayosd-client --output-volume mute-toggle
+# Source volume toggle mute
+ XF86AudioMicMute exec wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+ # Volume raise with custom value
+ XF86AudioRaiseVolume exec swayosd-client --output-volume 10
+# Volume lower with custom value
+ XF86AudioLowerVolume exec swayosd-client --output-volume -10
+
+# Capslock (If you don't want to use the backend)
+ --release Caps_Lock exec swayosd-client --caps-lock
+
+# Brightness raise with custom value('+' sign needed)
+ XF86MonBrightnessUp exec swayosd-client --brightness +10
+# Brightness lower with custom value('-' sign needed)
+ XF86MonBrightnessDown exec swayosd-client --brightness -10
+
+# Play/Pause current player
+ XF86AudioPlay exec swayosd-client --playerctl play-pause
+# Next song for current player
+ XF86AudioNext exec swayosd-client --playerctl next
+
+ $mod+Shift+w mode "resize"
+}
+mode "resize" {
+  bindsym --to-code {
+      $left resize shrink width 10px
+      $down resize grow height 10px
+      $up resize shrink height 10px
+      $right resize grow width 10px
+
+      Left resize shrink width 10px
+      Down resize grow height 10px
+      Up resize shrink height 10px
+      Right resize grow width 10px
+
+      Return mode "default"
+      Escape mode "default"
+      $mod+Shift+W mode "default"
+    }
+}
+
+# Workspaces:
+#
+     set $mon1 eDP-1
+     set $mon2 HDMI-A-1
+
+# swaysome group 1
+     workspace 10 output $mon1
+     workspace 11 output $mon1
+     workspace 12 output $mon1
+     workspace 13 output $mon1
+     workspace 14 output $mon1
+     workspace 15 output $mon1
+     workspace 16 output $mon1
+     workspace 17 output $mon1
+     workspace 18 output $mon1
+     workspace 19 output $mon1
+
+# swaysome group 2
+     workspace 20 output $mon2
+     workspace 21 output $mon2
+     workspace 22 output $mon2
+     workspace 23 output $mon2
+     workspace 24 output $mon2
+     workspace 25 output $mon2
+     workspace 26 output $mon2
+     workspace 27 output $mon2
+     workspace 28 output $mon2
+     workspace 29 output $mon2
+
+     assign [app_id="app.zen_browser.zen"] workspace number $ws20
+
+### Autostart
+
+exec swaysome init 1
+exec_always ~/.config/sway/sway-workspace-icons.sh
+exec dbus-update-activation-environment WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP=sway
+
+exec pipewire
+
+exec brightnessctl set 100%
+
+exec wl-paste --type text  --watch ~/.config/sway/clipboard_script.sh
+exec wl-paste --type image --watch ~/.config/sway/clipboard_script.sh
+
+exec_always $notify
+
+exec $tg -startintray
+
+exec swayosd-server
+
+exec blueman-applet
+
+exec sleep 5 && wpctl set-volume @DEFAULT_AUDIO_SINK@ 0%
+exec sleep 3 && ~/.config/sway/clip-notify.sh
+
+exec_always foot -s
+
+exec sway-audio-idle-inhibit
+
+exec swayrd
+
+exec $dock
+
+exec sleep 3 && swaymsg reload
+
+# Status Bar:
+#
+# Read `man 5 sway-bar` for more information about this section.
+bar {
+    position top
+    height 20
+    strip_workspace_numbers yes
+    icon_theme Papirus-Dark
+
+    # When the status_command prints a new line to stdout, swaybar updates.
+    # The default just shows the current date and time.
+    status_command i3status-rs ~/.config/i3status-rust/config.toml
+
+    colors {
+        statusline #ffffff
+        background #323232
+        inactive_workspace #323232ff #323232ff #ffffff
+        # active_workspace   #5f676a #204050 #ffffff
+    }
+        # colors {
+    #     background #222222
+    #     statusline #ffffff
+    #     separator #222222
+
+    #     focused_workspace  #6ca8c9 #285577 #ffffff
+    #     inactive_workspace #285577 #285577 #ffffff
+    #     urgent_workspace   #900000 #900000 #ffffff
+    #     binding_mode       #900000 #900000 #ffffff
+    # }
+
+}
+# bar {
+#     position top
+#
+#     # When the status_command prints a new line to stdout, swaybar updates.
+#     # The default just shows the current date and time.
+#     status_command while date +'%Y-%m-%d %X'; do sleep 1; done
+#
+#     colors {
+#         statusline #ffffff
+#         background #323232
+#         inactive_workspace #32323200 #32323200 #5c5c5c
+#     }
+# }
+#
+# bar {
+#     # position top
+#     # height 24
+#     # font pango:monospace 15
+#
+#     status_command i3status-rs ~/.config/i3status-rust/config.toml
+#     # status_padding 0
+#     # status_edge_padding 0
+#     # separator_symbol ""
+#
+#     # workspace_buttons yes
+#     strip_workspace_numbers yes
+#     # binding_mode_indicator yes
+#     # workspace_min_width 0
+#
+#     # tray_output *
+#     # tray_padding 7
+#
+#     # colors {
+#     #     background #222222
+#     #     statusline #ffffff
+#     #     separator #222222
+#
+#     #     focused_workspace  #6ca8c9 #285577 #ffffff
+#     #     active_workspace   #5f676a #204050 #ffffff
+#     #     inactive_workspace #285577 #285577 #ffffff
+#     #     urgent_workspace   #900000 #900000 #ffffff
+#     #     binding_mode       #900000 #900000 #ffffff
+#     # }
+# }
+
+
+for_window [app_id="^(org.pulseaudio.pavucontrol|\
+foot-tui|\
+blueman-manager|\
+com.network.manager|\
+it.catboy.ripdrag|\
+foot-ff|\
+waypie.config|\
+one.alynx.showmethekey|\
+io.github.Qalculate.qalculate-qt|\
+mpv|\
+Vtk|\
+com.interversehq.qView|\
+it.mijorus.smile|\
+$)"] floating enable
+
+for_window [app_id="^com\.ayugram\.desktop$" title="^Media viewer$"] \
+    floating enable, border none, resize set 1920 1080, move position 0 -24
+
+for_window [app_id="^(org.pulseaudio.pavucontrol|\
+foot-tui|\
+foot-ff|\
+$)"] resize set 1100 700
+
+for_window [app_id="^(org.pulseaudio.pavucontrol|\
+waypie.config|\
+$)"] resize set 1500 900

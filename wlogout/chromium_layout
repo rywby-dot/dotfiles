@@ -1,0 +1,30 @@
+{
+    "action" : "wlogout -l ~/.config/wlogout/apps_layout -C ~/.config/wlogout/style_apps.css"
+    "text" : "EXIT"
+    "keybind" : "e"
+}
+{
+    "action" : "chromium --test-type 'https://app.betaflight.com/'",
+    "text" : "betaflight configurator"
+    "keybind" : "b"
+}
+{
+    "action" : "chromium --test-type 'am32.ca'"
+    "text" : "am32"
+    "keybind" : "a"
+}
+{
+    "action" : "chromium --test-type"
+    "text" : "chromium"
+    "keybind" : "c"
+}
+{
+    "action" : "chromium --test-type 'esc-configurator.com'"
+    "text" : "eSc-configurator"
+    "keybind" : "s"
+}
+{
+    "action" : "foot env QUIET_START=1 zsh -ic 'nvim ~/.config/wlogout/chromium_layout; unset QUIET_START'"
+    "text" : ".config"
+    "keybind" : "C"
+}

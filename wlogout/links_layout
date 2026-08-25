@@ -1,0 +1,75 @@
+{
+    "action" : "wlogout -l ~/.config/wlogout/apps_layout -C ~/.config/wlogout/style_apps.css"
+    "text" : "EXIT"
+    "keybind" : "e"
+}
+{
+    "action" : "flatpak run app.zen_browser.zen  'https://agent.minimax.io/'"
+    "text" : "minimax"
+    "keybind" : "m"
+}
+{
+    "action" : "flatpak run app.zen_browser.zen  'https://claude.ai/new'"
+    "text" : "claude"
+    "keybind" : "c"
+}
+{
+    "action" : "flatpak run app.zen_browser.zen  'chatgpt.com'"
+    "text" : "cHatgpt"
+    "keybind" : "h"
+}
+{
+    "action" : "flatpak run app.zen_browser.zen  'gemini.google.com'"
+    "text" : "gemini"
+    "keybind" : "g"
+}
+{
+    "action" : "flatpak run app.zen_browser.zen  'chat.deepseek.com'"
+    "text" : "deepseek"
+    "keybind" : "d"
+}
+{
+    "action" : "flatpak run app.zen_browser.zen  'tinkercad.com'"
+    "text" : "Tinkercad"
+    "keybind" : "T"
+}
+{
+    "action" : "flatpak run app.zen_browser.zen  'translate.google.com/?sl=auto&tl=ru&op=translate'"
+    "text" : "translator"
+    "keybind" : "t"
+}
+{
+    "action" : "flatpak run app.zen_browser.zen  'youtube.com'"
+    "text" : "youtube"
+    "keybind" : "y"
+}
+{
+    "action" : "flatpak run app.zen_browser.zen  'three-drop.com'"
+    "text" : "3Drop"
+    "keybind" : "3"
+}
+{
+    "action" : "flatpak run app.zen_browser.zen  'formware.co/onlinestlrepair'"
+    "text" : "stlrepair"
+    "keybind" : "s"
+}
+{
+    "action" : "flatpak run app.zen_browser.zen  'flathub.org'"
+    "text" : "flathub"
+    "keybind" : "f"
+}
+{
+    "action" : "flatpak run app.zen_browser.zen  'thingiverse.com'"
+    "text" : "thiniVerse"
+    "keybind" : "v"
+}
+{
+    "action" : "flatpak run app.zen_browser.zen  'github.com'"
+    "text" : "Github"
+    "keybind" : "G"
+}
+{
+    "action" : "kitty -1 env QUIET_START=1 zsh -ic 'nvim ~/.config/wlogout/links_layout; unset QUIET_START'"
+    "text" : ".config"
+    "keybind" : "C"
+}

@@ -1,0 +1,149 @@
+icons_format = "{icon}"
+
+[theme]
+theme = "native"
+
+[theme.overrides]
+idle_bg = "#323232"
+idle_fg = "#ffffff"
+info_bg = "#323232"
+info_fg = "#ffffff"
+good_bg = "#323232"
+good_fg = "#ffffff"
+warning_bg = "#323232"
+warning_fg = "#ffffff"
+critical_bg = "#323232"
+critical_fg = "#ffffff"
+separator = ""
+separator_bg = "#323232"
+separator_fg = "#222222"
+start_separator = ""
+end_separator = ""
+alternating_tint_bg = "#00000000"
+alternating_tint_fg = "#00000000"
+
+[icons]
+icons = "awesome6"
+
+[icons.overrides]
+backlight = ["", "", "", "", "", "", "", "", ""]
+bat = ["", "", "", "", ""]
+bat_charging = "󰁹"
+headphones = ""
+net_vpn = ""
+net_wired = ""
+net_wireless = ""
+scratchpad = ""
+volume = [" ", " ", " "]
+volume_muted = ""
+
+[[block]]
+block = "backlight"
+device = "^amdgpu_bl0$"
+format = "{$icon $brightness.eng(range:..99) |}"
+missing_format = ""
+
+[[block.click]]
+button = "left"
+cmd = "swayosd-client --brightness +100"
+
+[[block.click]]
+button = "right"
+cmd = "swayosd-client --brightness -100"
+
+[[block.click]]
+button = "up"
+cmd = "swayosd-client --brightness +5"
+
+[[block.click]]
+button = "down"
+cmd = "swayosd-client --brightness -5"
+
+[[block]]
+block = "scratchpad"
+format = "{$icon $count.eng(range:1..) |}"
+
+[[block]]
+block = "custom"
+command = "$HOME/.config/i3status-rust/sway-language.sh"
+shell = "bash"
+persistent = true
+json = true
+format = " $text.pango-str() "
+error_format = ""
+
+# [block.theme_overrides]
+# idle_bg = "#222222"
+# idle_fg = "#ffffff"
+# info_bg = "#222222"
+# info_fg = "#36aca3"
+# warning_bg = "#222222"
+# warning_fg = "#dc6400"
+
+# [[block]]
+# block = "keyboard_layout"
+# driver = "sway"
+
+[[block]]
+block = "sound"
+driver = "pulseaudio"
+format = " $icon$volume.eng(w:2) {$output_name|}"
+show_volume_when_muted = true
+headphones_indicator = true
+step_width = 5
+max_vol = 100
+
+[block.mappings]
+"^bluez_output\\..*" = ""
+".*" = ""
+
+[[block.click]]
+button = "left"
+cmd = "pavucontrol"
+
+[[block.click]]
+button = "right"
+cmd = "swayosd-client --output-volume mute-toggle"
+
+[[block.click]]
+button = "middle"
+cmd = "swayosd-client --output-volume -100 --max-volume 100"
+
+[[block.click]]
+button = "up"
+cmd = "swayosd-client --output-volume +5 --max-volume 100"
+
+[[block.click]]
+button = "down"
+cmd = "swayosd-client --output-volume -5 --max-volume 100"
+
+[[block]]
+block = "net"
+format = " {$icon  $signal_strength|$ip $icon} "
+inactive_format = " ⚠ "
+missing_format = " ⚠ "
+
+[[block.click]]
+button = "left"
+cmd = "nmgui"
+
+[[block]]
+block = "battery"
+device = "BAT0"
+format = " $icon $percentage "
+full_format = " $icon $percentage "
+charging_format = " $percentage ^icon_bat_charging "
+not_charging_format = ""
+missing_format = ""
+# warning = 30
+# critical = 15
+full_threshold = 100
+
+[[block.click]]
+button = "left"
+cmd = "wlogout --primary-monitor eDP-1 -L 600 -R 600 -T 400 -B 400"
+
+[[block]]
+block = "time"
+interval = 1
+format = " $timestamp.datetime(f:'%Y-%m-%d %X') "
