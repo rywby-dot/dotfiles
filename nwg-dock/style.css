@@ -1,0 +1,38 @@
+window {
+  background: #222222;
+  border: 2px solid #285577;
+  border-radius: 0;
+}
+
+#box {
+  /* Define attributes of the box surrounding icons here */
+  padding: 10px
+}
+
+button, image {
+	background: none;
+	border-style: none;
+	box-shadow: none;
+	-gtk-icon-effect: none;
+	color: #999
+}
+
+button {
+	/*padding-left: 4px;
+	padding-right: 4px;*/
+	padding: 4px;
+	margin-left: 4px;
+	margin-right: 4px;
+	color: #eee;
+  font-size: 12px
+}
+
+button:hover {
+	background: none;
+	border: none;
+	box-shadow: none;
+}
+
+button:focus {
+	box-shadow: 0 0 2px;
+}
