@@ -340,6 +340,11 @@ def pok [] {
     ^pokemon-colorscripts -r --no-title
 }
 
+def dfiles [] {
+    git -C ~/.config add -- foot nvim mako yazi sway niri driftwm waybar nushell swayosd fuzzel wlogout waypie i3status-rust kitty starship.toml pipewire nwg-dock
+    git -C ~/.config commit -m "update"
+    git -C ~/.config push
+}
 
 # ============================================================
 # Wayland sessions
