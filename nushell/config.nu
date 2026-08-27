@@ -319,7 +319,7 @@ alias ripd = ripdrag -a -s 64 -H 500 -n -b -W 420
 
 # alias nuvi = nvim ~/.config/nushell/config.nu
 # alias nuli = nvim ~/.config/nushell/login.nu
-# alias stvi = nvim ~/.config/starship.toml
+# alias stvi = nvim ~/.config/starship-nu.toml
 
 
 # ============================================================
@@ -340,11 +340,11 @@ def pok [] {
     ^pokemon-colorscripts -r --no-title
 }
 
-def dfiles [] {
-    git -C ~/.config add -- foot nvim mako yazi sway niri driftwm waybar nushell swayosd fuzzel wlogout waypie i3status-rust kitty starship.toml pipewire nwg-dock
-    git -C ~/.config commit -m "update"
-    git -C ~/.config push
-}
+# def dfiles [] {
+#     git -C ~/.config add -- foot nvim mako yazi sway niri driftwm waybar nushell swayosd fuzzel wlogout waypie i3status-rust kitty starship.toml starship-nu.toml pipewire nwg-dock
+#     git -C ~/.config commit -m "update"
+#     git -C ~/.config push
+# }
 
 # ============================================================
 # Wayland sessions
@@ -402,6 +402,10 @@ def heve [] {
 # ============================================================
 # Starship
 # ============================================================
+
+# Keep Nushell on its dedicated Starship config. The vendor autoload file is
+# evaluated after config.nu and inherits this environment variable.
+$env.STARSHIP_CONFIG = ($nu.home-dir | path join ".config/starship-nu.toml")
 
 # Vendor autoload runs after config.nu and Starship replaces PROMPT_COMMAND
 # there. Preserve Nushell's stock prompt so the user autoload can restore it.

@@ -1,47 +1,48 @@
-# ~/.config/starship.toml
-
 add_newline = false
 
-# Nushell keeps its stock directory prompt and vi-mode indicators. Starship
-# contributes only Git information on the left and command duration on the right.
-format = "$git_branch$git_state$git_status"
+format = "$directory$git_branch$git_state$git_status$character"
 right_format = "$cmd_duration"
 
-
-# ============================================================
-# Git
-# ============================================================
+[directory]
+style = "bold blue"
+format = "[$path]($style) "
+truncation_length = 3
+truncate_to_repo = false
+home_symbol = "~"
 
 [git_branch]
 symbol = ""
 style = "bold green"
-format = "[$branch]($style)"
+format = "[$branch]($style) "
 truncation_length = 32
 truncation_symbol = "…"
 
 [git_state]
 style = "bold red"
-format = ' [$state( $progress_current/$progress_total)]($style)'
+format = "[$state( $progress_current/$progress_total)]($style) "
 
 [git_status]
 style = "bold yellow"
-format = '([$ahead_behind$stashed$conflicted$staged$modified$untracked$renamed$deleted]($style))'
+format = "([$ahead_behind$stashed$conflicted$staged$modified$untracked$renamed$deleted]($style) )"
+ahead = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇣${behind_count}⇡${ahead_count}"
+stashed = "*${count}"
+conflicted = "~${count}"
+staged = "+${count}"
+modified = "!${count}"
+untracked = "?${count}"
+renamed = "»${count}"
+deleted = "✘${count}"
 
-ahead = " ⇡${count}"
-behind = " ⇣${count}"
-diverged = " ⇣${behind_count}⇡${ahead_count}"
-stashed = " *${count}"
-conflicted = " ~${count}"
-staged = " +${count}"
-modified = " !${count}"
-untracked = " ?${count}"
-renamed = " »${count}"
-deleted = " ✘${count}"
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
+vimcmd_symbol = "[❮](bold green)"
+vimcmd_replace_one_symbol = "[❮](bold purple)"
+vimcmd_replace_symbol = "[❮](bold purple)"
+vimcmd_visual_symbol = "[❮](bold yellow)"
 
-
-# ============================================================
-# Command duration (right prompt)
-# ============================================================
 
 [cmd_duration]
 min_time = 1

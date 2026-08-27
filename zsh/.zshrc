@@ -76,6 +76,24 @@ ggph() {
     git add . && git commit -m "$msg" && git push
 }
 
+cggph() {
+    local msg
+    local config_dir="$HOME/.config"
+
+    vared -p "Commit message: " -c msg
+    [[ -n "$msg" ]] || {
+        echo "Empty commit message"
+        return 1
+    }
+
+    git -C "$config_dir" add -- \
+        foot nvim mako yazi sway niri driftwm waybar nushell swayosd \
+        fuzzel wlogout waypie i3status-rust kitty starship.toml \
+        starship-nu.toml pipewire nwg-dock zsh README.md .gitignore &&
+    git -C "$config_dir" commit -m "$msg" &&
+    git -C "$config_dir" push
+}
+
 compdef '_files -W ~/.config' vi
 compdef '_files -W ~/.config' chc
 compdef '_files -W flatpak remove' fpr
@@ -114,7 +132,7 @@ source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 # Prompt
-export STARSHIP_CONFIG="$HOME/.config/starship-zsh.toml"
+export STARSHIP_CONFIG="$HOME/.config/starship.toml"
 eval "$(starship init zsh)"
 
 # Startup banner
