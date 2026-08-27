@@ -27,15 +27,15 @@ icons = "awesome6"
 
 [icons.overrides]
 backlight = ["", "", "", "", "", "", "", "", ""]
-bat = ["", "", "", "", ""]
+bat = [" ", " ", " ", " ", " "]
 bat_charging = "󰁹"
-headphones = ""
-net_vpn = ""
-net_wired = ""
-net_wireless = ""
-scratchpad = ""
+headphones = " "
+net_vpn = " "
+net_wired = " "
+net_wireless = " "
+scratchpad = " "
 volume = [" ", " ", " "]
-volume_muted = ""
+volume_muted = " "
 
 [[block]]
 block = "backlight"
@@ -119,9 +119,9 @@ cmd = "swayosd-client --output-volume -5 --max-volume 100"
 
 [[block]]
 block = "net"
-format = " {$icon  $signal_strength|$ip $icon} "
-inactive_format = " ⚠ "
-missing_format = " ⚠ "
+format = " {$icon $signal_strength|$ip $icon} "
+inactive_format = "⚠ "
+missing_format = "⚠ "
 
 [[block.click]]
 button = "left"

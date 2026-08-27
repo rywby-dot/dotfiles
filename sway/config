@@ -6,7 +6,7 @@ seat * remember_layout_per_window enabled
 # Read `man 5 sway` for a complete reference.
 smart_borders on
 smart_gaps on
-mouse_warping container
+# mouse_warping container
 default_border pixel 2
 default_floating_border normal
 workspace_auto_back_and_forth yes

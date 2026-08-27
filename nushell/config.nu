@@ -51,7 +51,7 @@ $env.LANG = "en_US.UTF-8"
 
 $env.EDITOR = "nvim"
 $env.VISUAL = "nvim"
-$env.BROWSER = "app.zen_browser.zen"
+$env.BROWSER = "flatpak run app.zen_browser.zen"
 $env.TERMINAL = "footclient"
 
 
